@@ -1,6 +1,6 @@
 package com.thryan.secondclass.core.result
 
-class WebvpnResult (
+data class XMLResult (
     val message: String,
     val twfid: String,
     val csrf_rand_code: String,
