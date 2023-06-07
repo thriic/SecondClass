@@ -1,6 +1,6 @@
 package com.thryan.secondclass.core
 
-import com.thryan.secondclass.core.JSONFactory.toJSONResult
+import com.thryan.secondclass.core.utils.JSONFactory.toJSONResult
 import com.thryan.secondclass.core.result.JSONResult
 import com.thryan.secondclass.core.result.SCActivity
 import com.thryan.secondclass.core.result.ScoreInfo

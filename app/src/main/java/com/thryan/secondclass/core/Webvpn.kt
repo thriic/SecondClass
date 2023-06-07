@@ -1,7 +1,7 @@
 package com.thryan.secondclass.core
 
 
-import com.thryan.secondclass.core.XMLFactory.toXMLResult
+import com.thryan.secondclass.core.utils.XMLFactory.toXMLResult
 import com.thryan.secondclass.core.result.XMLResult
 import com.thryan.secondclass.core.utils.RSAUtils
 import com.thryan.secondclass.core.utils.Requests

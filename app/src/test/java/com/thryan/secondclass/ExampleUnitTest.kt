@@ -2,20 +2,11 @@ package com.thryan.secondclass
 
 import com.thryan.secondclass.core.SecondClass
 import com.thryan.secondclass.core.Webvpn
-import com.thryan.secondclass.core.XMLFactory
-import com.thryan.secondclass.core.utils.RSAUtils
 import com.thryan.secondclass.core.utils.after
 import com.thryan.secondclass.core.utils.before
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
 import org.junit.Test
-import java.text.DateFormat
-import java.text.SimpleDateFormat
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.util.Calendar
-import java.util.Date
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -28,7 +19,7 @@ class ExampleUnitTest {
     @Test
     fun web() = runBlocking {
         val re = Webvpn().login("2022101063", "")
-        println(re.message)
+        println(re.message+" "+re.twfid)
     }
 
 

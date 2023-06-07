@@ -1,3 +1,5 @@
 package com.thryan.secondclass.ui
 
-data class LoginState(val account:String)
+import com.thryan.secondclass.core.result.User
+
+data class LoginState(val logined:Boolean, val message:String)

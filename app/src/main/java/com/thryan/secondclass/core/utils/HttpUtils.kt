@@ -4,10 +4,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.FormBody
-import okhttp3.MediaType
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
-import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
@@ -75,10 +75,11 @@ class Requests(private val url: String) {
             val jsonObject = JSON().apply {
                 block()
             }.jsonObject
-            requestBody = RequestBody.create(
-                MediaType.parse("application/json;charset=UTF-8"),
-                jsonObject.toString().encodeToByteArray()
-            )
+            requestBody = jsonObject.toString().encodeToByteArray()
+                .toRequestBody(
+                    "application/json;charset=UTF-8".toMediaTypeOrNull(),
+                    0
+                )
         }
 
         fun form(block: Form.() -> Unit) {
@@ -111,7 +112,7 @@ suspend fun okhttp3.Call.awaitResponse(): Response {
 suspend fun Response.awaitString(): String {
     val res = this
     return withContext(Dispatchers.IO) {
-        res.body()?.string() ?: ""
+        res.body?.string() ?: ""
     }
 }
 

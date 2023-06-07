@@ -1,4 +1,4 @@
-package com.thryan.secondclass.core
+package com.thryan.secondclass.core.utils
 
 import com.thryan.secondclass.core.result.JSONResult
 import org.json.JSONObject
