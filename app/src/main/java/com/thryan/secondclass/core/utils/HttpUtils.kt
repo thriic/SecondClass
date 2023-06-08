@@ -1,5 +1,9 @@
 package com.thryan.secondclass.core.utils
 
+import com.thryan.secondclass.core.result.FailureResult
+import com.thryan.secondclass.core.result.HttpResult
+import com.thryan.secondclass.core.result.Result
+import com.thryan.secondclass.core.result.SuccessResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -15,8 +19,10 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 
-class Requests(private val url: String) {
-    suspend fun get(block: Request.() -> Unit): String {
+class Requests(private val url: String, private val factory: Factory) {
+
+    @JvmName("getT")
+    suspend fun <T> get(block: Request.() -> Unit): HttpResult<T> {
         val request = Request().apply {
             block()
         }
@@ -24,10 +30,15 @@ class Requests(private val url: String) {
         request.builder.get()
         val client = OkHttpClient()
         val response: Response = client.newCall(request.builder.build()).awaitResponse()
-        return response.awaitString().also(::println)
+        return factory.convert(response.awaitString().also(::println))
     }
 
-    suspend fun post(block: Request.() -> Unit): String {
+    suspend fun get(block: Request.() -> Unit): HttpResult<String> {
+        return this.get<String>(block)
+    }
+
+    @JvmName("postT")
+    suspend fun <T> post(block: Request.() -> Unit): HttpResult<T> {
         val request = Request().apply {
             block()
         }
@@ -39,11 +50,14 @@ class Requests(private val url: String) {
         request.builder.post(request.requestBody!!)
         val client = OkHttpClient()
         val response = client.newCall(request.builder.build()).awaitResponse()
-        return response.awaitString().also(::println)
-
+        return factory.convert(response.awaitString().also(::println))
     }
 
-    class Request {
+    suspend fun post(block: Request.() -> Unit): HttpResult<String> {
+        return this.post<String>(block)
+    }
+
+    inner class Request {
         val builder = okhttp3.Request.Builder()
         val api: String
             get() = path + params
@@ -51,8 +65,9 @@ class Requests(private val url: String) {
         private var path: String = ""
         var requestBody: RequestBody? = null
 
-        fun path(value: String) {
-            this.path = value
+
+        fun path(path: String) {
+            this.path = path
         }
 
         fun params(block: Params.() -> Unit) {
@@ -87,6 +102,7 @@ class Requests(private val url: String) {
                 block()
             }.formBody.build()
         }
+
 
     }
 }
@@ -155,5 +171,20 @@ class JSON {
     val jsonObject = JSONObject()
     infix fun String.to(value: String) {
         jsonObject.put(this, value)
+    }
+}
+
+
+
+class Solve<T,U> {
+    var onSuccess: ((T) -> U)? = null
+    var onFailure: ((String) -> String)? = null
+
+    fun success(block: (T) -> U) {
+        onSuccess = block
+    }
+
+    fun failure(block: (String) -> String) {
+        onFailure = block
     }
 }

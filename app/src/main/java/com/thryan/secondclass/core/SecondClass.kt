@@ -1,12 +1,11 @@
 package com.thryan.secondclass.core
 
-import com.thryan.secondclass.core.utils.JSONFactory.toJSONResult
-import com.thryan.secondclass.core.result.JSONResult
+import com.thryan.secondclass.core.result.Result
 import com.thryan.secondclass.core.result.SCActivity
 import com.thryan.secondclass.core.result.ScoreInfo
 import com.thryan.secondclass.core.result.SignInfo
-import com.thryan.secondclass.core.result.SignResult
 import com.thryan.secondclass.core.result.User
+import com.thryan.secondclass.core.utils.JSONFactory
 import com.thryan.secondclass.core.utils.Requests
 import com.thryan.secondclass.core.utils.after
 import com.thryan.secondclass.core.utils.before
@@ -15,7 +14,9 @@ import org.json.JSONObject
 import java.math.BigDecimal
 
 class SecondClass(val twfid: String) {
-    private val requests = Requests("http://ekt-cuit-edu-cn.webvpn.cuit.edu.cn:8118/api/")
+
+    private val requests =
+        Requests("http://ekt-cuit-edu-cn.webvpn.cuit.edu.cn:8118/api/", JSONFactory())
     var token: String = ""
 
     /**
@@ -24,114 +25,140 @@ class SecondClass(val twfid: String) {
      * @param password 密码,默认为123456
      * @return JSONResult(message="...",data="token")
      */
-    suspend fun login(account: String, password: String = "123456"): JSONResult<String> =
-        requests.post {
-            path("login?sf_request_type=ajax")
-            headers {
-                "sdp-app-session" to twfid
+    suspend fun login(account: String, password: String = "123456"): Result<String> =
+        requests
+            .post {
+                path("login?sf_request_type=ajax")
+                headers {
+                    "sdp-app-session" to twfid
+                }
+                json {
+                    "account" to account
+                    "password" to password
+                }
             }
-            json {
-                "account" to account
-                "password" to password
+            .solve {
+                success {
+                    it
+                }
+                failure {
+                    ""
+                }
             }
-        }.toJSONResult()
 
 
     /**
      * 获取用户信息
      * @return User
      */
-    suspend fun getUser(): User {
-        println(twfid)
-        println(token)
-        val res = requests.get {
-            path("getLoginUser?sf_request_type=ajax")
-            headers {
-                "sdp-app-session" to twfid
-                "Authorization" to "Bearer $token"
+    suspend fun getUser(): Result<User> =
+        requests
+            .get<JSONObject> {
+                path("getLoginUser?sf_request_type=ajax")
+                headers {
+                    "sdp-app-session" to twfid
+                    "Authorization" to "Bearer $token"
+                }
             }
-        }.toJSONResult<JSONObject>()
-        val data = res.data
-        return User(
-            data.getString("id"),
-            data.getString("name"),
-            data.getInt("sex"),
-            data.getJSONObject("loginEmpInfo").getString("orgName")
-        )
-    }
+            .solve {
+                success {
+                    User(
+                        it.getString("id"),
+                        it.getString("name"),
+                        it.getInt("sex"),
+                        it.getJSONObject("loginEmpInfo").getString("orgName")
+                    )
+                }
+                failure {
+                    it
+                }
+            }
+
 
     /**
      * 获取活动
      * @return 活动list
      */
-    suspend fun getActivities(): List<SCActivity> {
-        val res = requests.get {
+    suspend fun getActivities(): Result<List<SCActivity>> =
+        requests.get<JSONObject> {
             path("activityInfo/page?activityName=&activityStatus=&activityLx=&activityType=&pageSize=50&sf_request_type=ajax")
             headers {
                 "sdp-app-session" to twfid
                 "Authorization" to "Bearer $token"
             }
-        }.toJSONResult<JSONObject>()
-        val rows = res.data.getJSONArray("rows")
-        return buildList {
-            for (i in 0 until rows.length()) {
-                val element = rows.getJSONObject(i)
-                add(
-                    SCActivity(
-                        element.getString("id"),
-                        element.getString("activityStatus"),
-                        element.getString("activityName"),
-                        element.getString("startTime"),
-                        element.getString("endTime"),
-                        element.getString("isSign"),
-                        element.getString("activityDec"),
-                        element.getString("activityHost")
-                    )
-                )
-            }
         }
-    }
+            .solve {
+                success {
+                    val rows = it.getJSONArray("rows")
+                    buildList {
+                        for (i in 0 until rows.length()) {
+                            val element = rows.getJSONObject(i)
+                            add(
+                                SCActivity(
+                                    element.getString("id"),
+                                    element.getString("activityStatus"),
+                                    element.getString("activityName"),
+                                    element.getString("startTime"),
+                                    element.getString("endTime"),
+                                    element.getString("isSign"),
+                                    element.getString("activityDec"),
+                                    element.getString("activityHost")
+                                )
+                            )
+                        }
+                    }
+                }
+                failure { it }
+            }
+
 
     /**
      * 获取用户积分，活动，诚信值
      * @param user 用户
      * @return ScoreInfo
      */
-    suspend fun getScoreInfo(user: User): ScoreInfo {
-        val res = requests.get {
-            path("studentScore/appDataInfo")
-            params {
-                "userId" to user.id
-                "sf_request_type" to "ajax"
+    suspend fun getScoreInfo(user: User): Result<ScoreInfo> =
+        requests
+            .get<JSONObject> {
+                path("studentScore/appDataInfo")
+                params {
+                    "userId" to user.id
+                    "sf_request_type" to "ajax"
+                }
+                headers {
+                    "sdp-app-session" to twfid
+                    "Authorization" to "Bearer $token"
+                }
             }
-            headers {
-                "sdp-app-session" to twfid
-                "Authorization" to "Bearer $token"
+            .solve {
+                success {
+                    ScoreInfo(
+                        it.get("score") as BigDecimal,
+                        it.getInt("item"),
+                        it.getInt("integrity_value"),
+                        it.getInt("activity")
+                    )
+                }
+                failure { it }
             }
-        }.toJSONResult<JSONObject>()
-        val data = res.data//{score: 3, item: 0, integrity_value: 70, activity: 2}
-        return ScoreInfo(
-            data.get("score") as BigDecimal,
-            data.getInt("item"),
-            data.getInt("integrity_value"),
-            data.getInt("activity")
-        )
-    }
 
-    suspend fun sign(activity: SCActivity): SignResult {
-        val res = requests.post {
-            path("activityInfoSign/add?sf_request_type=ajax")
-            headers {
-                "sdp-app-session" to twfid
-                "Authorization" to "Bearer $token"
+
+    suspend fun sign(activity: SCActivity): Result<String> =
+        requests
+            .post {
+                path("activityInfoSign/add?sf_request_type=ajax")
+                headers {
+                    "sdp-app-session" to twfid
+                    "Authorization" to "Bearer $token"
+                }
+                json {
+                    "activityId" to activity.id
+                }
             }
-            json {
-                "activityId" to activity.id
+            .solve {
+                success { it }
+                failure { it }
             }
-        }.toJSONResult<JSONObject>()
-        val data = res.data
-        return SignResult(data.getString("msg"),data.getInt("code"))
-    }
 
 
     /**
@@ -139,76 +166,91 @@ class SecondClass(val twfid: String) {
      * @param activity 活动
      * @return SignInfo
      */
-    suspend fun getSignInfo(activity: SCActivity): SignInfo {
-        val res = requests.get {
-            path("activityInfoSign/my")
-            params {
-                "activityId" to activity.id
-                "sf_request_type" to "ajax"
+    suspend fun getSignInfo(activity: SCActivity): Result<SignInfo> =
+        requests
+            .get<JSONObject> {
+                path("activityInfoSign/my")
+                params {
+                    "activityId" to activity.id
+                    "sf_request_type" to "ajax"
+                }
+                headers {
+                    "sdp-app-session" to twfid
+                    "Authorization" to "Bearer $token"
+                }
             }
-            headers {
-                "sdp-app-session" to twfid
-                "Authorization" to "Bearer $token"
+            .solve {
+                success {
+                    val data = it.getJSONArray("rows").getJSONObject(0)
+                    SignInfo(
+                        it.getString("id"),
+                        it.has("signOutTime") && data.has("signInTime")
+                    )
+                }
+                failure { it }
             }
-        }.toJSONResult<JSONObject>()
-        val data = res.data.getJSONArray("rows").getJSONObject(0)
-        return SignInfo(
-            data.getString("id"),
-            data.has("signOutTime") && data.has("signInTime")
-        )
-    }
+
 
     /**
      * 签到签退
      * @param activity 活动
      * @param signInfo 签到信息
      */
-    suspend fun signIn(activity: SCActivity, signInfo: SignInfo): JSONResult<String> {
-        val res = requests.post {
-            path("activityInfoSign/edit?sf_request_type=ajax")
-            headers {
-                "sdp-app-session" to twfid
-                "Authorization" to "Bearer $token"
+    suspend fun signIn(activity: SCActivity, signInfo: SignInfo): Result<String> =
+        requests
+            .post {
+                path("activityInfoSign/edit?sf_request_type=ajax")
+                headers {
+                    "sdp-app-session" to twfid
+                    "Authorization" to "Bearer $token"
+                }
+                json {
+                    "id" to signInfo.signId
+                    "signInTime" to activity.startTime.after(10)
+                    "signOutTime" to activity.endTime.before(10)
+                }
             }
-            json {
-                "id" to signInfo.signId
-                "signInTime" to activity.startTime.after(10)
-                "signOutTime" to activity.endTime.before(10)
+            .solve {
+                success { it }
+                failure { it }
             }
-        }.toJSONResult<String>()
-        return res
-    }
+
 
     /**
      * 获取用户参与的活动
      * @return 活动list
      */
-    suspend fun getMyActivities(): List<SCActivity> {
-        val res = requests.get {
-            path("activityInfo/my?sf_request_type=ajax")
-            headers {
-                "sdp-app-session" to twfid
-                "Authorization" to "Bearer $token"
+    suspend fun getMyActivities(): Result<List<SCActivity>> =
+        requests
+            .get<JSONArray> {
+                path("activityInfo/my?sf_request_type=ajax")
+                headers {
+                    "sdp-app-session" to twfid
+                    "Authorization" to "Bearer $token"
+                }
             }
-        }.toJSONResult<JSONArray>()
-        val rows = res.data
-        return buildList {
-            for (i in 0 until rows.length()) {
-                if(rows.isNull(i)) continue
-                val element = rows.getJSONObject(i)
-                add(
-                    SCActivity(
-                        element.getString("id"),
-                        element.getString("activityStatus"),
-                        element.getString("activityName"),
-                        element.getString("startTime"),
-                        element.getString("endTime"),
-                        null,
-                        element.getString("activityDec"),
-                        element.getString("activityHost")
-                    )
-                )
+            .solve {
+                success {
+                    buildList {
+                        for (i in 0 until it.length()) {
+                            if (it.isNull(i)) continue
+                            val element = it.getJSONObject(i)
+                            add(
+                                SCActivity(
+                                    element.getString("id"),
+                                    element.getString("activityStatus"),
+                                    element.getString("activityName"),
+                                    element.getString("startTime"),
+                                    element.getString("endTime"),
+                                    null,
+                                    element.getString("activityDec"),
+                                    element.getString("activityHost")
+                                )
+                            )
+                        }
+                    }
+                }
+                failure { it }
             }
-        }
+
     }
-}
