@@ -9,6 +9,6 @@ import java.math.BigDecimal
  * @param activity 完成活动数
  */
 data class ScoreInfo(
-    val score: BigDecimal, val item: Int, val integrity_value: Int,
+    val score: Double, val item: Int, val integrity_value: Int,
     val activity: Int
 )

@@ -18,46 +18,44 @@ class ExampleUnitTest {
 
 
     @Test
-    fun json() {
-        val json = JSONObject("{\"a\": \"s\",\"b\": {\"c\": 1}}")
-        val a = json.get("a")
-        if(a is String) println("true")
-    }
-
-    @Test
     fun web() = runBlocking {
-        val re = Webvpn().login("2022101063", "thryan0829")
-        if(re.success) {
-            println(re.message + " " + re.result!!.value)
-        }else{
+        val re = Webvpn().login("2022101063", "")
+        if (re.success) {
+            println(re.message + " " + re.value!!)
+        } else {
             println(re.message)
         }
+    }
+    @Test
+    fun checkWebvpn() = runBlocking {
+        val res = Webvpn.checkLogin("ea718a1e337fc988")
+        println(res.value!!)
     }
 
 
     @Test
     fun secondClass() = runBlocking {
-        val secondClass = SecondClass("98088769406e58fe")
-//        val res = secondClass.login("2022101063")
-//        println(res.message)
-//        println(res.data)
-        secondClass.token =
-            "eyJhbGciOiJIUzUxMiJ9.eyJ1c2VySWQiOjE1ODA1MDkwNjQyOTc3MDk1NzAsImFjY291bnQiOiIyMDIyMTAxMDYzIiwidXVpZCI6ImM2YWVlODhlLTk4YmItNGNhYS04YmYzLTEyODc1NjYwZGI4ZSIsInN1YiI6IjE1ODA1MDkwNjQyOTc3MDk1NzAiLCJpYXQiOjE2ODYwNjcxMTMsImV4cCI6MTY4NjE1MzUxM30.qu7sdBhO68mOdNXATOaH3skJy3u-IxtVEhx-LDUDV_JnFGASibi8ofRs9KinL6KGix6H75gm4fTCzU07ZVYR9g"
-
-//        val us = secondClass.getUser()
-//        println(us)
-//        val score = secondClass.getScoreInfo(us)
-//        println(score)
-//        val activity = secondClass.getMyActivities()
-//        println(activity.size)
+        val secondClass = SecondClass("ea718a1e337fc988")
+        val res = secondClass.login("2022101063")
+        println(res.message)
+        if (res.success) {
+            println(res.value!!)
+            val activity = secondClass.getMyActivities()
+            if(activity.success)
+            println(activity.value!!.size)
+        }
+        val us = secondClass.getUser()
+        println(us)
+        val score = secondClass.getScoreInfo(us.value!!)
+        println(score)
 
     }
+
 
     @Test
     fun time() = runBlocking {
         println("2023-06-11 00:00:00".after(10))
         println("2023-06-11 00:00:00".before(10))
-
     }
 
 }

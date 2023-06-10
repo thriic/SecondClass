@@ -1,6 +1,7 @@
-package com.thryan.secondclass.core.result
+package com.thryan.secondclass.core
 
 import com.thryan.secondclass.core.utils.Solve
+import com.thryan.secondclass.core.result.Result
 
 
 class HttpResult<T>(val message: String, val result: T) {
@@ -11,14 +12,13 @@ class HttpResult<T>(val message: String, val result: T) {
         val success = expect == message || message.contains(expect)
         return if (success)
             Result(
-                success,
+                true,
                 solve.onFailure?.let { it(message) } ?: message,
-                SuccessResult(solve.onSuccess?.let { it(result) }
-                    ?: throw Exception())
+                solve.onSuccess?.let { it(result) } ?: throw Exception()
             )
         else
             Result(
-                success,
+                false,
                 solve.onFailure?.let { it(message) } ?: message
             )
 

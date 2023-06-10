@@ -1,9 +1,6 @@
 package com.thryan.secondclass.core.utils
 
-import com.thryan.secondclass.core.result.FailureResult
-import com.thryan.secondclass.core.result.HttpResult
-import com.thryan.secondclass.core.result.Result
-import com.thryan.secondclass.core.result.SuccessResult
+import com.thryan.secondclass.core.HttpResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -90,6 +87,7 @@ class Requests(private val url: String, private val factory: Factory) {
             val jsonObject = JSON().apply {
                 block()
             }.jsonObject
+            println(jsonObject.toString())
             requestBody = jsonObject.toString().encodeToByteArray()
                 .toRequestBody(
                     "application/json;charset=UTF-8".toMediaTypeOrNull(),

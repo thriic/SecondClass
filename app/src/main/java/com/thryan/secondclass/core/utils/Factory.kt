@@ -1,7 +1,7 @@
 package com.thryan.secondclass.core.utils
 
 import com.thryan.secondclass.core.result.VpnInfo
-import com.thryan.secondclass.core.result.HttpResult
+import com.thryan.secondclass.core.HttpResult
 import org.json.JSONObject
 
 interface Factory {
@@ -11,10 +11,10 @@ interface Factory {
 class JSONFactory : Factory {
 
     override fun <T> convert(value: String): HttpResult<T> {
-        if (value.contains("Server internal error")) throw Exception("500 Server internal error")
+        if (value.contains("Server internal error")||value.contains("<html>")) throw Exception("500 Server internal error")
         val json = JSONObject(value)
         val message = json.getString("message")
-        return HttpResult(message, (if (json.has("data")) json.get("data") else "") as T)
+        return HttpResult(message, (if (!json.isNull("data")) json.get("data") else json) as T)
     }
 
 }

@@ -1,10 +1,12 @@
 package com.thryan.secondclass.core
 
+import com.thryan.secondclass.core.result.ActivityStatus
 import com.thryan.secondclass.core.result.Result
 import com.thryan.secondclass.core.result.SCActivity
 import com.thryan.secondclass.core.result.ScoreInfo
 import com.thryan.secondclass.core.result.SignInfo
 import com.thryan.secondclass.core.result.User
+import com.thryan.secondclass.core.result.getActivityStatus
 import com.thryan.secondclass.core.utils.JSONFactory
 import com.thryan.secondclass.core.utils.Requests
 import com.thryan.secondclass.core.utils.after
@@ -39,6 +41,7 @@ class SecondClass(val twfid: String) {
             }
             .solve {
                 success {
+                    this@SecondClass.token = it
                     it
                 }
                 failure {
@@ -96,13 +99,14 @@ class SecondClass(val twfid: String) {
                             add(
                                 SCActivity(
                                     element.getString("id"),
-                                    element.getString("activityStatus"),
+                                    element.getString("activityStatus").getActivityStatus(),
                                     element.getString("activityName"),
                                     element.getString("startTime"),
                                     element.getString("endTime"),
                                     element.getString("isSign"),
                                     element.getString("activityDec"),
-                                    element.getString("activityHost")
+                                    element.getString("activityHost"),
+                                    element.getInt("signNum"),
                                 )
                             )
                         }
@@ -133,7 +137,7 @@ class SecondClass(val twfid: String) {
             .solve {
                 success {
                     ScoreInfo(
-                        it.get("score") as BigDecimal,
+                        it.getDouble("score"),
                         it.getInt("item"),
                         it.getInt("integrity_value"),
                         it.getInt("activity")
@@ -145,7 +149,7 @@ class SecondClass(val twfid: String) {
 
     suspend fun sign(activity: SCActivity): Result<String> =
         requests
-            .post {
+            .post<JSONObject> {
                 path("activityInfoSign/add?sf_request_type=ajax")
                 headers {
                     "sdp-app-session" to twfid
@@ -156,8 +160,8 @@ class SecondClass(val twfid: String) {
                 }
             }
             .solve {
-                success { it }
-                failure { it }
+                success { it.getString("msg") }
+                failure { if(it == "请求JSON参数格式不正确，请检查参数格式") "活动id获取不全，请尝试其他活动" else it }
             }
 
 
@@ -183,8 +187,8 @@ class SecondClass(val twfid: String) {
                 success {
                     val data = it.getJSONArray("rows").getJSONObject(0)
                     SignInfo(
-                        it.getString("id"),
-                        it.has("signOutTime") && data.has("signInTime")
+                        data.getString("id"),
+                        !data.isNull("signOutTime") && !data.isNull("signInTime")
                     )
                 }
                 failure { it }
@@ -198,7 +202,7 @@ class SecondClass(val twfid: String) {
      */
     suspend fun signIn(activity: SCActivity, signInfo: SignInfo): Result<String> =
         requests
-            .post {
+            .post<JSONObject> {
                 path("activityInfoSign/edit?sf_request_type=ajax")
                 headers {
                     "sdp-app-session" to twfid
@@ -211,7 +215,7 @@ class SecondClass(val twfid: String) {
                 }
             }
             .solve {
-                success { it }
+                success { "请求成功" }
                 failure { it }
             }
 
@@ -238,13 +242,14 @@ class SecondClass(val twfid: String) {
                             add(
                                 SCActivity(
                                     element.getString("id"),
-                                    element.getString("activityStatus"),
+                                    element.getString("activityStatus").getActivityStatus(),
                                     element.getString("activityName"),
                                     element.getString("startTime"),
                                     element.getString("endTime"),
-                                    null,
+                                    "1",
                                     element.getString("activityDec"),
-                                    element.getString("activityHost")
+                                    element.getString("activityHost"),
+                                    element.getInt("signNum")
                                 )
                             )
                         }
