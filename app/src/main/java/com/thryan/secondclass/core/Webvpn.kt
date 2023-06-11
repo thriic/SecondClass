@@ -1,66 +1,58 @@
 package com.thryan.secondclass.core
 
 import com.thryan.secondclass.core.result.VpnInfo
-import com.thryan.secondclass.core.result.Result
+import com.thryan.secondclass.core.result.HttpResult
+import com.thryan.secondclass.core.utils.Factory
 import com.thryan.secondclass.core.utils.RSAUtils
 import com.thryan.secondclass.core.utils.Requests
-import com.thryan.secondclass.core.utils.XMLFactory
 
 class Webvpn {
     companion object {
-        private val requests = Requests("https://webvpn.cuit.edu.cn/por/", XMLFactory())
+        private val requests = Requests("https://webvpn.cuit.edu.cn/por/", Factory("XML"))
 
 
-        suspend fun checkLogin(twfid: String): Result<Boolean> =
-            requests
-                .get<VpnInfo> {
-                    path("svpnSetting.csp?apiversion=1")
-                    headers {
-                        cookie {
-                            "ENABLE_RANDCODE" to "0"
-                            "TWFID" to twfid
-                        }
+        suspend fun checkLogin(twfid: String): Boolean {
+            val res = requests.get {
+                path("svpnSetting.csp?apiversion=1")
+                headers {
+                    cookie {
+                        "ENABLE_RANDCODE" to "0"
+                        "TWFID" to twfid
                     }
                 }
-                .solve("auth succ.") {
-                    success { true }
-                    failure { it }
-                }
+            }
+            return res.message == "auth succ."
+        }
     }
 
 
-    suspend fun auth(): Result<VpnInfo> =
-        requests
-            .get<VpnInfo> {
-                path("login_auth.csp?apiversion=1")
-                headers {
-                    "Content-Type" to "application/x-www-form-urlencoded"
-                    cookie {
-                        "ENABLE_RANDCODE" to "0"
-                    }
+    private suspend fun auth(): HttpResult<VpnInfo> = requests
+        .get<VpnInfo> {
+            path("login_auth.csp?apiversion=1")
+            headers {
+                "Content-Type" to "application/x-www-form-urlencoded"
+                cookie {
+                    "ENABLE_RANDCODE" to "0"
                 }
             }
-            .solve("login auth success") {
-                success { it }
-                failure { it }
-            }
+        }
 
 
-    suspend fun login(account: String, password: String): Result<String> {
+    suspend fun login(account: String, password: String): HttpResult<String> {
         val auth = auth()
-        if (!auth.success) return Result(false, auth.message)
-        val vpnInfo = auth.value
-        return requests
-            .post<VpnInfo> {
+        if (auth.message != "login auth success") return HttpResult(auth.message, auth.message)
+        val vpnInfo = auth.data!!
+        val res = requests
+            .post<String> {
                 path("login_psw.csp?anti_replay=1&encrypt=1&apiversion=1")
                 headers {
                     cookie {
                         "ENABLE_RANDCODE" to "0"
-                        "TWFID" to vpnInfo!!.twfid
+                        "TWFID" to vpnInfo.twfid
                     }
                 }
                 form {
-                    "svpn_req_randcode" to vpnInfo!!.csrf_rand_code
+                    "svpn_req_randcode" to vpnInfo.csrf_rand_code
                     "svpn_name" to account
                     "svpn_password" to RSAUtils.encrypt(
                         "${password}_${vpnInfo.csrf_rand_code}",
@@ -69,10 +61,14 @@ class Webvpn {
                     )
                 }
             }
-            .solve("radius auth succ") {
-                success { it.twfid }
-                failure {  if (it.contains("Invalid username or password")) "学号或密码错误" else it }
-            }
+        return HttpResult(
+            when (res.message) {
+                "radius auth succ" -> "请求成功"
+                else -> res.message
+            }, res.data
+        )
+        //Invalid username or password
+
     }
 
 }

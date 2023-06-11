@@ -21,9 +21,11 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.thryan.secondclass.ui.login.Login
 import com.thryan.secondclass.ui.theme.SecondClassTheme
-import com.thryan.secondclass.ui.viewmodel.LoginViewModel
-import com.thryan.secondclass.ui.viewmodel.PageViewModel
+import com.thryan.secondclass.ui.login.LoginViewModel
+import com.thryan.secondclass.ui.page.PageViewModel
+import com.thryan.secondclass.ui.page.Page
 
 
 class MainActivity : ComponentActivity() {

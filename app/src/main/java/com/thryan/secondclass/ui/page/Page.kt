@@ -1,9 +1,10 @@
-package com.thryan.secondclass.ui
+package com.thryan.secondclass.ui.page
 
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.util.Log
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.SizeTransform
 import androidx.compose.animation.core.keyframes
 import androidx.compose.animation.core.tween
@@ -25,7 +26,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.systemBarsPadding
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -39,22 +39,16 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.ThumbUp
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.Divider
 
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -68,13 +62,11 @@ import androidx.compose.material3.SuggestionChipDefaults
 
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -82,16 +74,10 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.semantics.isContainer
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
-import androidx.lifecycle.ViewModel
-import com.thryan.secondclass.core.result.ActivityStatus
-import com.thryan.secondclass.ui.theme.SecondClassTheme
-import com.thryan.secondclass.ui.viewmodel.PageViewModel
-import kotlinx.coroutines.launch
+import com.thryan.secondclass.ui.login.HttpStatus
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -108,7 +94,7 @@ fun Page(viewModel: PageViewModel) {
 
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @Composable
 fun PageBox(viewModel: PageViewModel, listState: LazyListState) {
 
@@ -132,8 +118,7 @@ fun PageBox(viewModel: PageViewModel, listState: LazyListState) {
             .zIndex(1f)
             .fillMaxWidth()
             .statusBarsPadding()
-            .systemBarsPadding()
-            .padding(top = 16.dp)) {
+            .padding(16.dp)) {
         DockedSearchBar(
             modifier = Modifier.align(Alignment.TopCenter),
             query = text,
@@ -173,8 +158,6 @@ fun PageBox(viewModel: PageViewModel, listState: LazyListState) {
                                 val si = viewModel.getScoreInfo()
                                 val user = viewModel.getUserInfo()
                                 dialogMessage.value = buildString {
-                                    append(user.orgName)
-                                    append(" ")
                                     append(user.name)
                                     append("\n积分:")
                                     append(si.score)
@@ -223,6 +206,7 @@ fun Progress(httpState: HttpState) {
     }
 }
 
+@ExperimentalAnimationApi
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityList(
@@ -248,14 +232,13 @@ fun ActivityList(
         Log.i("Page", "${activities.size}")
         itemsIndexed(items = activities) { index, item ->
             val status = when (item.activityStatus) {
-                ActivityStatus.ENROLLING -> if (item.isSign == "1") "已报名" else "报名中"
-                ActivityStatus.UPCOMING -> "待开始"
-                ActivityStatus.ONGOING -> "进行中"
-                ActivityStatus.PENDING_FINISH -> "待完结"
-                ActivityStatus.FINISHED -> "已完结"
-                ActivityStatus.UNKNOWN -> "未知"
-            }//遍历内容和
-            // 索引
+                "0" -> if (item.isSign == "1") "已报名" else "报名中"
+                "1" -> "待开始"
+                "2" -> "进行中"
+                "3" -> "待完结"
+                "5" -> "已完结"
+                else -> "未知"
+            }
             var expand by remember { mutableStateOf(false) }
             AnimatedContent(
                 targetState = expand,
@@ -324,7 +307,7 @@ fun ActivityRow(
         ) {
             Text(activity.activityName, style = MaterialTheme.typography.titleLarge)
             Text(
-                activity.description.replace("\\n", ""),
+                activity.activityDec.replace("\\n", ""),
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 7
             )
@@ -381,14 +364,14 @@ fun ActivityRowExpand(
         ) {
             Text(activity.activityName, style = MaterialTheme.typography.titleLarge)
             Text(
-                activity.description.replace("\\n", ""),
+                activity.activityDec.replace("\\n", ""),
                 style = MaterialTheme.typography.bodyMedium
             )
             Text(
                 activity.startTime.slice(5..15) + " 至 " + activity.endTime.slice(5..15),
                 style = MaterialTheme.typography.labelMedium
             )
-            Text("学院: ${activity.host}", style = MaterialTheme.typography.labelMedium)
+            Text("学院: ${activity.activityHost}", style = MaterialTheme.typography.labelMedium)
             Text("报名人数: ${activity.signNum}", style = MaterialTheme.typography.labelMedium)
             if (status != "报名中")
                 Row(
@@ -441,7 +424,7 @@ private fun Dialog(
     message: String,
     openDialog: MutableState<Boolean>
 ) {
-    val activity = (LocalContext.current as Activity)
+    //val activity = (LocalContext.current as Activity)
     AlertDialog(
         onDismissRequest = {
         },
@@ -458,65 +441,4 @@ private fun Dialog(
             }
         }
     )
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Preview(showBackground = true)
-@Composable
-fun PagePreview() {
-    SecondClassTheme {
-        val test = buildList<SCActivity> {
-            for (i in 1..10)
-                add(
-                    SCActivity(
-                        "123",
-                        ActivityStatus.ENROLLING,
-                        "前后端开发知识分享(Async Lab)",
-                        "12",
-                        "13",
-                        null,
-                        "\\n#共筑安全之道｜网络空间安全学院邀您参加学风建设月讲座#\\n各位同学们：在学风建设月的倡导下，网络空间安全学院邀请到异步开发实验室，为大家带来一场关于‘从前端到后端的穿越’的精彩讲座。这场讲座将带领大家深入了解前端和后端开发的相关知识。\\n本次讲座你将体验到：HDFC-目录树定位文件，矩阵变换在前端的运用，从前后端交互角度学习tcp/ip与http协议（线下签到）\\n具体信息请加入群：308022463\\n\\n\\n报名截止日期：6月11日24：00",
-                        "网安",
-                        548
-                    )
-                )
-        }
-        var text by rememberSaveable { mutableStateOf("") }
-        var active by rememberSaveable { mutableStateOf(false) }
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 16.dp)
-        ) {
-            Box(
-                Modifier
-                    .semantics {
-                        isContainer = true
-                    }
-                    .zIndex(1f)
-                    .fillMaxWidth()
-                    .padding(bottom = 16.dp)) {
-                DockedSearchBar(
-                    modifier = Modifier.align(Alignment.TopCenter),
-                    query = text,
-                    onQueryChange = { text = it },
-                    onSearch = { active = false },
-                    active = active,
-                    onActiveChange = {
-                        active = it
-                    },
-                    placeholder = { Text("Search") },
-                    leadingIcon = {
-                        if (active) Icon(
-                            Icons.Default.ArrowBack,
-                            contentDescription = null
-                        ) else Icon(Icons.Default.Search, contentDescription = null)
-                    },
-                    trailingIcon = { Icon(Icons.Default.MoreVert, contentDescription = null) },
-                ) {
-
-                }
-            }
-        }
-    }
 }

@@ -1,4 +1,4 @@
-package com.thryan.secondclass.ui
+package com.thryan.secondclass.ui.login
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
@@ -18,11 +18,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -31,8 +29,6 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import com.thryan.secondclass.ui.viewmodel.LoginViewModel
-import kotlinx.coroutines.flow.map
 
 @SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
@@ -103,7 +99,7 @@ fun Login(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
             keyboardActions = KeyboardActions(
                 onDone = { }
             ),
-            visualTransformation = PasswordVisualTransformation()
+            //visualTransformation = PasswordVisualTransformation()
         )
 
         OutlinedTextField(

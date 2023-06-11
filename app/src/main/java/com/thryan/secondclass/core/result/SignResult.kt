@@ -1,3 +1,6 @@
 package com.thryan.secondclass.core.result
 
-class SignResult(val msg:String)
+import kotlinx.serialization.Serializable
+
+@Serializable
+class SignResult(val msg: String, val code: String)

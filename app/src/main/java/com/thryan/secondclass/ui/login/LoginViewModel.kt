@@ -1,12 +1,12 @@
-package com.thryan.secondclass.ui.viewmodel
+package com.thryan.secondclass.ui.login
 
 import android.annotation.SuppressLint
 import android.content.Context
+import androidx.lifecycle.ViewModel
 
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.thryan.secondclass.core.Webvpn
-import com.thryan.secondclass.ui.LoginState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -18,7 +18,7 @@ import kotlinx.coroutines.withContext
 
 @SuppressLint("StaticFieldLeak")
 class LoginViewModel(private val context: Context, private val navController: NavHostController) :
-    AViewModel(navController) {
+    ViewModel() {
 
     private val TAG = "LoginViewModel"
 
@@ -50,37 +50,28 @@ class LoginViewModel(private val context: Context, private val navController: Na
     fun login(account: String, password: String,scAccount:String = account) {
         this.viewModelScope.launch(Dispatchers.IO) {
             sharedPref.getString("twfid", "")?.let {
-                val check = Webvpn.checkLogin(it)
-                if (check.success) withContext(Dispatchers.Main) {
+                if (Webvpn.checkLogin(it)) withContext(Dispatchers.Main) {
                     navController.navigate("page?twfid=$it&account=${scAccount.ifEmpty { account }}")
                     this@launch
                 }
                 else {
                     val res = Webvpn().login(account, password)
-                    if (res.success) {
+                    if (res.message == "请求成功") {
                         with(sharedPref.edit()) {
-                            putString("twfid", res.value!!)
+                            putString("twfid", res.data)
                             putString("account", account)
                             putString("password", password)
                             apply()
                         }
                         withContext(Dispatchers.Main) {
-                            navController.navigate("page?twfid=${res.value}&account=${scAccount.ifEmpty { account }}")
+                            navController.navigate("page?twfid=${res.data}&account=${scAccount.ifEmpty { account }}"){
+                                launchSingleTop = true
+                            }
                         }
-                    } else
-                        updateUiState(true, res.message)
+                    } else updateUiState(true, res.message!!)
                 }
             }
 
-        }
-    }
-
-    suspend fun checkLogin(twfid: String) {
-        val res = Webvpn.checkLogin(twfid)
-        if (res.success) withContext(Dispatchers.Main) {
-            navController.navigate("page/$twfid"){
-                launchSingleTop = true
-            }
         }
     }
 
