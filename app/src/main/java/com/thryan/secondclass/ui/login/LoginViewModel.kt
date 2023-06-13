@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
@@ -26,52 +25,74 @@ class LoginViewModel(private val context: Context, private val navController: Na
         "com.thryan.secondclass.PREFERENCE", Context.MODE_PRIVATE
     )
 
-    private val _uiState = MutableStateFlow(LoginState(false, ""))
+    private val _uiState = MutableStateFlow(LoginState("", "", "", false, ""))
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
 
+    private suspend fun update(uiStates: LoginState) = _uiState.emit(uiStates)
 
-    suspend fun init() {
-        //sharedPref.getString("twfid", "")?.let { checkLogin(it) }
-    }
+    fun send(intent: LoginIntent) = viewModelScope.launch { onHandle(intent) }
 
-    /**
-     * 对外单独暴漏修改城市名方法
-     */
-    fun updateUiState(login: Boolean, message: String = "") {
-        _uiState.update { currentState ->
-            currentState.copy(
-                fail = login,
-                message = message.substringAfter("<![CDATA[").substringBefore("]]>")
-            )
+    private suspend fun onHandle(intent: LoginIntent) {
+        when (intent) {
+            is LoginIntent.Login -> {
+                login()
+            }
+
+            is LoginIntent.GetPreference -> {
+                update(
+                    uiState.value.copy(
+                        account = sharedPref.getString("account", "")!!,
+                        password = sharedPref.getString("password", "")!!
+                    )
+                )
+            }
+
+            is LoginIntent.UpdateAccount -> {
+                update(uiState.value.copy(account = intent.account))
+            }
+
+            is LoginIntent.UpdatePassword -> {
+                update(uiState.value.copy(password = intent.password))
+            }
+
+            is LoginIntent.UpdateSCAccount -> {
+                update(uiState.value.copy(scAccount = intent.scAccount))
+            }
+            is LoginIntent.CloseDialog -> {
+                update(uiState.value.copy(showDialog = false))
+            }
         }
     }
 
 
-    fun login(account: String, password: String,scAccount:String = account) {
-        this.viewModelScope.launch(Dispatchers.IO) {
-            sharedPref.getString("twfid", "")?.let {
-                if (Webvpn.checkLogin(it)) withContext(Dispatchers.Main) {
-                    navController.navigate("page?twfid=$it&account=${scAccount.ifEmpty { account }}")
-                    this@launch
-                }
-                else {
-                    val res = Webvpn().login(account, password)
-                    if (res.message == "请求成功") {
-                        with(sharedPref.edit()) {
-                            putString("twfid", res.data)
-                            putString("account", account)
-                            putString("password", password)
-                            apply()
-                        }
-                        withContext(Dispatchers.Main) {
-                            navController.navigate("page?twfid=${res.data}&account=${scAccount.ifEmpty { account }}"){
-                                launchSingleTop = true
-                            }
-                        }
-                    } else updateUiState(true, res.message!!)
+    suspend fun login() {
+        val twfid = sharedPref.getString("twfid", "")
+        val (account, password, scAccount) = uiState.value
+        //检查缓存的twfid是否可用
+        if (!twfid.isNullOrEmpty() && Webvpn.checkLogin(twfid)) {
+            withContext(Dispatchers.Main) {
+                navController.navigate("page?twfid=${twfid}&account=${scAccount.ifEmpty { account }}") {
+                    launchSingleTop = true
                 }
             }
-
+        } else {
+            val response = Webvpn.login(account, password)
+            //登录
+            if (response.message == "请求成功") {
+                with(sharedPref.edit()) {
+                    putString("twfid", response.data)
+                    putString("account", account)
+                    putString("password", password)
+                    apply()
+                }
+                withContext(Dispatchers.Main) {
+                    navController.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
+                        launchSingleTop = true
+                    }
+                }
+            } else {
+                update(uiState.value.copy(showDialog = true, message = response.message))
+            }
         }
     }
 

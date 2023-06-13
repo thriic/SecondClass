@@ -21,6 +21,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import com.thryan.secondclass.ui.info.Info
+import com.thryan.secondclass.ui.info.InfoViewModel
 import com.thryan.secondclass.ui.login.Login
 import com.thryan.secondclass.ui.theme.SecondClassTheme
 import com.thryan.secondclass.ui.login.LoginViewModel
@@ -74,12 +76,25 @@ fun AppNavHost(
         ) { backStackEntry ->
             val twfid = backStackEntry.arguments?.getString("twfid")
             val account = backStackEntry.arguments?.getString("account")
-
             Page(
                 PageViewModel(
                     navController,
                     twfid = checkNotNull(twfid),
                     account = checkNotNull(account)
+                )
+            )
+        }
+        composable(
+            "info?twfid={twfid}&id={id}",
+            arguments = listOf(
+                navArgument("id") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val id = backStackEntry.arguments?.getString("id")
+            Info(
+                navController,
+                InfoViewModel(
+                    id = checkNotNull(id)
                 )
             )
         }

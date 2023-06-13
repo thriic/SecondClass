@@ -18,6 +18,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -26,14 +27,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.PasswordVisualTransformation
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+
 
 @SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
 fun Login(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
-    val loginUiState = viewModel.uiState.collectAsState()
+    val uiState = viewModel.uiState.collectAsState()
+
+    viewModel.send(LoginIntent.GetPreference)
+
     Column(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -41,99 +44,98 @@ fun Login(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
             .statusBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        LoginContent(uiState = uiState, viewModel = viewModel)
+    }
+    if (uiState.value.showDialog) Dialog(message = uiState.value.message, viewModel = viewModel)
+}
+
+@Composable
+fun LoginContent(uiState: State<LoginState>, viewModel: LoginViewModel) {
+    var err by rememberSaveable {
+        mutableStateOf(false)
+    }
 
 
-        var account by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-            mutableStateOf(TextFieldValue(viewModel.sharedPref.getString("account", "")!!))
-        }
-        var err by rememberSaveable {
-            mutableStateOf(false)
-        }
-        var pwd by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-            mutableStateOf(TextFieldValue(viewModel.sharedPref.getString("password", "")!!))
-        }
-        var scAccount by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-            mutableStateOf(TextFieldValue(""))
-        }
 
-        Text("第二课堂", style = MaterialTheme.typography.displaySmall, modifier = Modifier.padding(bottom = 16.dp))
+    Text(
+        "第二课堂",
+        style = MaterialTheme.typography.displaySmall,
+        modifier = Modifier.padding(bottom = 16.dp)
+    )
 
-        OutlinedTextField(
-            value = account,
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth(),
-            onValueChange = {
-                account = it
-                err = !account.text.all { char -> char.isDigit() }
-            },
-            label = { Text("学号") },
-            isError = err,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { }
-            ),
-            supportingText = {
-                if (err) {
-                    Text(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = "仅数字",
-                        color = MaterialTheme.colorScheme.error
-                    )
-                }
+    OutlinedTextField(
+        value = uiState.value.account,
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth(),
+        onValueChange = {
+            viewModel.send(LoginIntent.UpdateAccount(it))
+            err = !it.all { char -> char.isDigit() }
+        },
+        label = { Text("学号") },
+        isError = err,
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { }
+        ),
+        supportingText = {
+            if (err) {
+                Text(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "仅数字",
+                    color = MaterialTheme.colorScheme.error
+                )
             }
-        )
-        OutlinedTextField(
-            value = pwd,
-            singleLine = true,
-            modifier = Modifier.fillMaxWidth(),
-            onValueChange = { pwd = it },
-            label = { Text("密码") },
-            placeholder = { Text("webvpn/教务处密码")},
-            isError = false,
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { }
-            ),
-            //visualTransformation = PasswordVisualTransformation()
-        )
+        }
+    )
+    OutlinedTextField(
+        value = uiState.value.password,
+        singleLine = true,
+        modifier = Modifier.fillMaxWidth(),
+        onValueChange = { viewModel.send(LoginIntent.UpdatePassword(it)) },
+        label = { Text("密码") },
+        placeholder = { Text("webvpn/教务处密码") },
+        isError = false,
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { }
+        ),
+        //visualTransformation = PasswordVisualTransformation()
+    )
 
-        OutlinedTextField(
-            value = scAccount,
-            singleLine = true,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 8.dp),
-            onValueChange = { scAccount = it },
-            label = { Text("二课账号(可不填)") },
-            keyboardOptions = KeyboardOptions.Default.copy(
-                imeAction = ImeAction.Done
-            ),
-            keyboardActions = KeyboardActions(
-                onDone = { }
-            )
+    OutlinedTextField(
+        value = uiState.value.scAccount,
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        onValueChange = { viewModel.send(LoginIntent.UpdateSCAccount(it)) },
+        label = { Text("二课账号(可不填)") },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { }
         )
-        Text("不填则使用登录webvpn的学号和默认密码", style = MaterialTheme.typography.labelSmall)
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.End,
-            modifier = Modifier.fillMaxWidth()
+    )
+    Text("不填则使用登录webvpn的学号和默认密码", style = MaterialTheme.typography.labelSmall)
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.End,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Button(
+            modifier = Modifier
+                .padding(start = 8.dp),
+            onClick = { viewModel.send(LoginIntent.Login) }
         ) {
-            Button(
-                modifier = modifier
-                    .padding(start = 8.dp),
-                onClick = { viewModel.login(account.text, pwd.text,scAccount.text) }
-            ) {
-                Text("Login")
-            }
+            Text("Login")
         }
     }
-    if (loginUiState.value.fail) Dialog(message = loginUiState.value.message, viewModel = viewModel)
-
 }
 
 @Composable
@@ -145,13 +147,13 @@ private fun Dialog(
     AlertDialog(
         onDismissRequest = {
         },
-        title = { Text("Fail") },
+        title = { Text("登录失败") },
         text = { Text(message) },
         modifier = modifier,
         confirmButton = {
             TextButton(
                 onClick = {
-                    viewModel.updateUiState(false)
+                    viewModel.send(LoginIntent.CloseDialog)
                 }
             ) {
                 Text(text = "确定")

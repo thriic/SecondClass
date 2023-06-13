@@ -3,7 +3,9 @@ package com.thryan.secondclass.core.utils
 
 import com.thryan.secondclass.core.result.HttpResult
 import com.thryan.secondclass.core.result.SignInfo
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 fun String.after(minutes: Int): String {
@@ -18,6 +20,12 @@ fun String.before(minutes: Int): String {
     val dateTime = LocalDateTime.parse(this, formatter)
     val oneHourBefore = dateTime.minusMinutes(minutes.toLong())
     return oneHourBefore.format(formatter)
+}
+
+fun String.toLocalDate(): LocalDate {
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    val dateTime = LocalDateTime.parse(this, formatter)
+    return dateTime.toLocalDate()
 }
 
 fun <T> HttpResult<T>.success() = message == "请求成功"

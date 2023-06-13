@@ -121,7 +121,7 @@ class SecondClass(val twfid: String) {
      * @param activity 活动
      * @param signInfo 签到信息
      */
-    suspend fun signIn(activity: SCActivity, signInfo: SignInfo): HttpResult<String> = requests
+    suspend fun signIn(activity: SCActivity, signInfo: SignInfo, signInTime: String = activity.startTime.after(10), signOutTime: String = activity.endTime.before(10)): HttpResult<String> = requests
         .post {
             path("activityInfoSign/edit?sf_request_type=ajax")
             headers {
@@ -130,8 +130,8 @@ class SecondClass(val twfid: String) {
             }
             json {
                 "id" to signInfo.id
-                "signInTime" to activity.startTime.after(10)
-                "signOutTime" to activity.endTime.before(10)
+                "signInTime" to signInTime
+                "signOutTime" to signOutTime
             }
         }
 

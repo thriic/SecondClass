@@ -6,23 +6,21 @@ import com.thryan.secondclass.core.utils.Factory
 import com.thryan.secondclass.core.utils.RSAUtils
 import com.thryan.secondclass.core.utils.Requests
 
-class Webvpn {
-    companion object {
-        private val requests = Requests("https://webvpn.cuit.edu.cn/por/", Factory("XML"))
+object Webvpn {
+    private val requests = Requests("https://webvpn.cuit.edu.cn/por/", Factory("XML"))
 
 
-        suspend fun checkLogin(twfid: String): Boolean {
-            val res = requests.get {
-                path("svpnSetting.csp?apiversion=1")
-                headers {
-                    cookie {
-                        "ENABLE_RANDCODE" to "0"
-                        "TWFID" to twfid
-                    }
+    suspend fun checkLogin(twfid: String): Boolean {
+        val res = requests.get {
+            path("svpnSetting.csp?apiversion=1")
+            headers {
+                cookie {
+                    "ENABLE_RANDCODE" to "0"
+                    "TWFID" to twfid
                 }
             }
-            return res.message == "auth succ."
         }
+        return res.message == "auth succ."
     }
 
 

@@ -11,6 +11,8 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 
 import org.junit.Test
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 /**
  * Example local unit test, which will execute on the development machine (host).
@@ -73,8 +75,9 @@ class ExampleUnitTest {
 
     @Test
     fun time() = runBlocking {
-        println("2023-06-11 00:00:00".after(10))
-        println("2023-06-11 00:00:00".before(10))
+        val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+        val dateTime = LocalDateTime.parse("2023-06-11 00:00:00", formatter)
+        dateTime
     }
 
 }
