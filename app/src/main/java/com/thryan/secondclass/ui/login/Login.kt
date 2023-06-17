@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.statusBarsPadding
@@ -12,21 +13,26 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import com.thryan.secondclass.ui.component.DebouncedButton
+import kotlinx.coroutines.delay
 
 
 @SuppressLint("FlowOperatorInvokedInComposition")
@@ -100,7 +106,7 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
         keyboardActions = KeyboardActions(
             onDone = { }
         ),
-        //visualTransformation = PasswordVisualTransformation()
+        visualTransformation = PasswordVisualTransformation()
     )
 
     OutlinedTextField(
@@ -158,4 +164,45 @@ private fun Dialog(
             }
         }
     )
+}
+
+@Composable
+fun DebouncedButton(
+    modifier: Modifier = Modifier,
+    outline: Boolean = true,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+    content: @Composable (RowScope.() -> Unit)
+) {
+    var clicked by remember {
+        mutableStateOf(!enabled)
+    }
+    LaunchedEffect(clicked) {
+        if (clicked) {
+            delay(1000L)
+            clicked = !clicked
+        }
+    }
+    if (!outline)
+        Button(
+            modifier = modifier,
+            onClick = {
+                if (enabled && !clicked) {
+                    clicked = true
+                    onClick()
+                }
+            },
+            content = content
+        )
+    else
+        OutlinedButton(
+            modifier = modifier,
+            onClick = {
+                if (enabled && !clicked) {
+                    clicked = true
+                    onClick()
+                }
+            },
+            content = content
+        )
 }

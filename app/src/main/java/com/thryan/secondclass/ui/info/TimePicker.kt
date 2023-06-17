@@ -1,4 +1,4 @@
-package com.thryan.secondclass.ui.component
+package com.thryan.secondclass.ui.info
 
 import android.util.Log
 import androidx.compose.material3.ExperimentalMaterial3Api
