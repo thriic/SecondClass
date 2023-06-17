@@ -3,6 +3,7 @@ package com.thryan.secondclass.ui.page
 sealed class PageIntent {
     object Init : PageIntent()
     object CloseDialog : PageIntent()
-    data class ShowDialog(val type: Int) : PageIntent()
+    object UpdateActivity : PageIntent()
+    data class ShowDialog(val message: String = "", val userInfo: Boolean = false) : PageIntent()
     data class OpenActivity(val id: String) : PageIntent()
 }

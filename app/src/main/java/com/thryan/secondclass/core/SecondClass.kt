@@ -12,11 +12,11 @@ import com.thryan.secondclass.core.utils.Requests
 import com.thryan.secondclass.core.utils.after
 import com.thryan.secondclass.core.utils.before
 
-class SecondClass(val twfid: String) {
+class SecondClass(private val twfid: String, var token: String = "") {
 
     private val requests =
         Requests("http://ekt-cuit-edu-cn.webvpn.cuit.edu.cn:8118/api/", Factory("JSON"))
-    var token: String = ""
+
 
     /**
      * 登录第二课堂

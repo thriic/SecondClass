@@ -1,7 +1,6 @@
 package com.thryan.secondclass.core.result
 
 import kotlinx.serialization.Serializable
-import java.math.BigDecimal
 
 /**
  * @param score 积分

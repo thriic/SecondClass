@@ -4,8 +4,6 @@ import com.thryan.secondclass.core.result.HttpResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.json.Json
 import okhttp3.FormBody
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.OkHttpClient
@@ -20,8 +18,8 @@ import kotlin.coroutines.resumeWithException
 
 class Requests(val url: String, val factory: Factory) {
 
-    suspend inline fun <reified T> get(block: Request<T>.() -> Unit): HttpResult<T> {
-        val request = Request<T>().apply {
+    suspend inline fun <reified T> get(block: Request.() -> Unit): HttpResult<T> {
+        val request = Request().apply {
             block()
         }
         request.builder.url((url + request.api).also(::println))
@@ -32,12 +30,12 @@ class Requests(val url: String, val factory: Factory) {
     }
 
     @JvmName("getString")
-    suspend fun get(block: Request<String>.() -> Unit): HttpResult<String> {
+    suspend fun get(block: Request.() -> Unit): HttpResult<String> {
         return this.get<String>(block)
     }
 
-    suspend inline fun <reified T> post(block: Request<T>.() -> Unit): HttpResult<T> {
-        val request = Request<T>().apply {
+    suspend inline fun <reified T> post(block: Request.() -> Unit): HttpResult<T> {
+        val request = Request().apply {
             block()
         }
 
@@ -52,11 +50,11 @@ class Requests(val url: String, val factory: Factory) {
     }
 
     @JvmName("postString")
-    suspend fun post(block: Request<String>.() -> Unit): HttpResult<String> {
+    suspend fun post(block: Request.() -> Unit): HttpResult<String> {
        return this.post<String>(block)
     }
 
-    inner class Request<T> {
+    inner class Request {
         val builder = okhttp3.Request.Builder()
         private var params: String = ""
         private var path: String = ""
@@ -174,15 +172,3 @@ class JSON {
 }
 
 
-class Solve<T, U> {
-    var onSuccess: ((T) -> U)? = null
-    var onFailure: ((String) -> String)? = null
-
-    fun success(block: (T) -> U) {
-        onSuccess = block
-    }
-
-    fun failure(block: (String) -> String) {
-        onFailure = block
-    }
-}

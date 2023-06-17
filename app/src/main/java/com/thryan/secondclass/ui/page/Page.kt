@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.layout.Arrangement
-
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,11 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
-import com.thryan.secondclass.core.result.SCActivity
-
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
@@ -34,11 +28,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
-
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,37 +38,36 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
-
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isContainer
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
+import com.thryan.secondclass.R
+import com.thryan.secondclass.core.result.SCActivity
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun Page(viewModel: PageViewModel) {
-    viewModel.send(PageIntent.Init)
+    viewModel.send(PageIntent.UpdateActivity)
     PageBox(viewModel)
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun PageBox(viewModel: PageViewModel) {
     val pageState by viewModel.pageState.collectAsState()
     val listState: LazyListState = rememberLazyListState()
-
-    var text by rememberSaveable { mutableStateOf("") }
-    var active by rememberSaveable { mutableStateOf(false) }
-    var expanded by rememberSaveable { mutableStateOf(false) }
 
     if (pageState.showingDialog) Dialog(pageState = pageState, viewModel = viewModel)
 
@@ -90,58 +81,7 @@ fun PageBox(viewModel: PageViewModel) {
             .fillMaxWidth()
             .statusBarsPadding()
             .padding(16.dp)) {
-        DockedSearchBar(
-            modifier = Modifier.align(Alignment.TopCenter),
-            query = text,
-            tonalElevation = SearchBarDefaults.Elevation.plus(16.dp),
-            colors = SearchBarDefaults.colors(dividerColor = MaterialTheme.colorScheme.inversePrimary),
-            onQueryChange = { text = it },
-            onSearch = { active = false },
-            active = active,
-            onActiveChange = {
-                active = it
-            },
-            placeholder = { Text("Search") },
-            leadingIcon = {
-                if (active)
-                    IconButton(onClick = { active = false }) {
-                        Icon(Icons.Default.ArrowBack, null)
-                    }
-                else
-                    IconButton(onClick = { active = true }) {
-                        Icon(Icons.Default.Search, null)
-                    }
-            },
-            trailingIcon = {
-                IconButton(onClick = {
-                    expanded = true
-                    active = false
-                }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = null)
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                    ) {
-                        DropdownMenuItem(
-                            text = { Text("用户信息") },
-                            onClick = {
-                                viewModel.send(PageIntent.ShowDialog(1))
-                                expanded = false
-                            },
-                        )
-                        DropdownMenuItem(
-                            text = { Text("使用须知") },
-                            onClick = {
-                                viewModel.send(PageIntent.ShowDialog(2))
-                                expanded = false
-                            })
-                    }
-                }
-            },
-        ) {
-
-        }
-
+        SearchBar(modifier = Modifier.align(Alignment.TopCenter), viewModel = viewModel)
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -158,6 +98,69 @@ fun PageBox(viewModel: PageViewModel) {
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SearchBar(modifier: Modifier = Modifier, viewModel: PageViewModel) {
+    var text by rememberSaveable { mutableStateOf("") }
+    var active by rememberSaveable { mutableStateOf(false) }
+    var expanded by rememberSaveable { mutableStateOf(false) }
+
+    DockedSearchBar(
+        modifier = modifier,
+        query = text,
+        tonalElevation = SearchBarDefaults.Elevation.plus(16.dp),
+        colors = SearchBarDefaults.colors(dividerColor = MaterialTheme.colorScheme.inversePrimary),
+        onQueryChange = { text = it },
+        onSearch = { active = false },
+        active = active,
+        onActiveChange = {
+            active = it
+        },
+        placeholder = { Text("Search") },
+        leadingIcon = {
+            if (active)
+                IconButton(onClick = { active = false }) {
+                    Icon(Icons.Default.ArrowBack, null)
+                }
+            else
+                IconButton(onClick = { active = true }) {
+                    Icon(Icons.Default.Search, null)
+                }
+        },
+        trailingIcon = {
+            IconButton(onClick = {
+                expanded = true
+                active = false
+            }) {
+                Icon(Icons.Default.MoreVert, contentDescription = null)
+                DropdownMenu(
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                ) {
+                    MenuItem("用户信息") {
+                        viewModel.send(PageIntent.ShowDialog(userInfo = true))
+                        expanded = false
+                    }
+                    val aboutString = stringResource(R.string.about)
+                    MenuItem("使用须知") {
+                        viewModel.send(PageIntent.ShowDialog(aboutString))
+                        expanded = false
+                    }
+                }
+            }
+        },
+    ) {
+
+    }
+}
+
+@Composable
+fun MenuItem(text: String, onClick: () -> Unit) {
+    DropdownMenuItem(
+        text = { Text(text) },
+        onClick = onClick
+    )
+}
+
 @Composable
 fun Progress(uiState: PageState) {
     Column(
@@ -178,6 +181,7 @@ fun ActivityList(
     viewModel: PageViewModel,
     listState: LazyListState = rememberLazyListState()
 ) {
+    val incompleteId = stringResource(R.string.incomplete_id)
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
         state = listState,
@@ -193,7 +197,7 @@ fun ActivityList(
             )
         }
         Log.i("Page", "${pageState.activities.size}")
-        itemsIndexed(items = pageState.activities) { index, item ->
+        itemsIndexed(items = pageState.activities) { _, item ->
             val status = when (item.activityStatus) {
                 "0" -> if (item.isSign == "1") "已报名" else "报名中"
                 "1" -> "待开始"
@@ -202,9 +206,11 @@ fun ActivityList(
                 "5" -> "已完结"
                 else -> "未知"
             }
-            var expand by remember { mutableStateOf(false) }
             ActivityRow(activity = item, viewModel = viewModel, status = status) {
-                viewModel.send(PageIntent.OpenActivity(item.id))
+                if (item.id.contains("***")) {
+                    viewModel.send(PageIntent.ShowDialog(incompleteId))
+                } else
+                    viewModel.send(PageIntent.OpenActivity(item.id))
             }
         }
 
@@ -236,7 +242,7 @@ fun ActivityRow(
             horizontalAlignment = Alignment.Start,
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            Text(activity.activityName, style = MaterialTheme.typography.titleLarge)
+            Text(activity.activityName, style = MaterialTheme.typography.titleMedium)
             Text(
                 activity.activityDec.replace("\\n", ""),
                 style = MaterialTheme.typography.bodyMedium,

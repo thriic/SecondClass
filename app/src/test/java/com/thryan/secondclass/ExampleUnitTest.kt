@@ -3,13 +3,10 @@ package com.thryan.secondclass
 import com.thryan.secondclass.core.SecondClass
 import com.thryan.secondclass.core.Webvpn
 import com.thryan.secondclass.core.result.HttpResult
-import com.thryan.secondclass.core.utils.after
-import com.thryan.secondclass.core.utils.before
 import com.thryan.secondclass.core.utils.success
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
-
 import org.junit.Test
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -39,7 +36,7 @@ class ExampleUnitTest {
 
     @Test
     fun web() = runBlocking {
-        val re = Webvpn().login("2022101063", "thryan0829")
+        val re = Webvpn.login("2022101063", "")
         if (re.success()) {
             println(re.message + " " + re.data)
         } else {

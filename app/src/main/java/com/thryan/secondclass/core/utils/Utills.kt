@@ -5,7 +5,6 @@ import com.thryan.secondclass.core.result.HttpResult
 import com.thryan.secondclass.core.result.SignInfo
 import java.time.LocalDate
 import java.time.LocalDateTime
-import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 
 fun String.after(minutes: Int): String {
@@ -21,6 +20,12 @@ fun String.before(minutes: Int): String {
     val oneHourBefore = dateTime.minusMinutes(minutes.toLong())
     return oneHourBefore.format(formatter)
 }
+
+fun String.toLocalDateTime(): LocalDateTime {
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
+    return LocalDateTime.parse(this, formatter)
+}
+
 
 fun String.toLocalDate(): LocalDate {
     val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")

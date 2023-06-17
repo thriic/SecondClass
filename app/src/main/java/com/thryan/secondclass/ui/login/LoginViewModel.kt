@@ -2,32 +2,36 @@ package com.thryan.secondclass.ui.login
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.ViewModel
-
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.thryan.secondclass.core.Webvpn
+import com.thryan.secondclass.ui.info.Repository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @SuppressLint("StaticFieldLeak")
-class LoginViewModel(private val context: Context, private val navController: NavHostController) :
+class LoginViewModel(context: Context, private val navController: NavHostController) :
     ViewModel() {
 
-    private val TAG = "LoginViewModel"
-
-    val sharedPref = context.getSharedPreferences(
+    private val sharedPref: SharedPreferences = context.getSharedPreferences(
         "com.thryan.secondclass.PREFERENCE", Context.MODE_PRIVATE
     )
+
 
     private val _uiState = MutableStateFlow(LoginState("", "", "", false, ""))
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
 
+    init {
+        Repository.activities.value = emptyList()
+        send(LoginIntent.GetPreference)
+    }
     private suspend fun update(uiStates: LoginState) = _uiState.emit(uiStates)
 
     fun send(intent: LoginIntent) = viewModelScope.launch { onHandle(intent) }
@@ -35,6 +39,7 @@ class LoginViewModel(private val context: Context, private val navController: Na
     private suspend fun onHandle(intent: LoginIntent) {
         when (intent) {
             is LoginIntent.Login -> {
+                Log.i(Companion.TAG,"login ${uiState.value.account}:${uiState.value.password}")
                 login()
             }
 
@@ -58,6 +63,7 @@ class LoginViewModel(private val context: Context, private val navController: Na
             is LoginIntent.UpdateSCAccount -> {
                 update(uiState.value.copy(scAccount = intent.scAccount))
             }
+
             is LoginIntent.CloseDialog -> {
                 update(uiState.value.copy(showDialog = false))
             }
@@ -65,13 +71,14 @@ class LoginViewModel(private val context: Context, private val navController: Na
     }
 
 
-    suspend fun login() {
+    private suspend fun login() {
         val twfid = sharedPref.getString("twfid", "")
         val (account, password, scAccount) = uiState.value
         //检查缓存的twfid是否可用
         if (!twfid.isNullOrEmpty() && Webvpn.checkLogin(twfid)) {
             withContext(Dispatchers.Main) {
                 navController.navigate("page?twfid=${twfid}&account=${scAccount.ifEmpty { account }}") {
+                    popUpTo("login") { inclusive = true }
                     launchSingleTop = true
                 }
             }
@@ -87,6 +94,7 @@ class LoginViewModel(private val context: Context, private val navController: Na
                 }
                 withContext(Dispatchers.Main) {
                     navController.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
+                        popUpTo("login") { inclusive = true }
                         launchSingleTop = true
                     }
                 }
@@ -94,6 +102,10 @@ class LoginViewModel(private val context: Context, private val navController: Na
                 update(uiState.value.copy(showDialog = true, message = response.message))
             }
         }
+    }
+
+    companion object {
+        private const val TAG = "LoginViewModel"
     }
 
 }

@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">SecondClass</string>
+    <string name="link">http://ekty.cuit.edu.cn</string>
+    <string name="vpn_link">http://ekty-cuit-edu-cn.webvpn.cuit.edu.cn:8118</string>
+    <string name="incomplete_id">此活动id不全，无法报名签到</string>
+    <string name="about">此软件提供在任意时间对已报名活动进行签到的功能\n由于注意二课的审核机制，请鉴别该活动是否与自己相关再进行报名签到\n本项目仅供开发学习使用</string>
 </resources>

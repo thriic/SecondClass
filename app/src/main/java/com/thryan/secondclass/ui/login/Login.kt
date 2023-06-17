@@ -12,13 +12,11 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,14 +26,13 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
+import com.thryan.secondclass.ui.component.DebouncedButton
 
 
 @SuppressLint("FlowOperatorInvokedInComposition")
 @Composable
 fun Login(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
-    val uiState = viewModel.uiState.collectAsState()
-
-    viewModel.send(LoginIntent.GetPreference)
+    val uiState by viewModel.uiState.collectAsState()
 
     Column(
         modifier = modifier
@@ -46,15 +43,14 @@ fun Login(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
     ) {
         LoginContent(uiState = uiState, viewModel = viewModel)
     }
-    if (uiState.value.showDialog) Dialog(message = uiState.value.message, viewModel = viewModel)
+    if (uiState.showDialog) Dialog(message = uiState.message, viewModel = viewModel)
 }
 
 @Composable
-fun LoginContent(uiState: State<LoginState>, viewModel: LoginViewModel) {
+fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
     var err by rememberSaveable {
         mutableStateOf(false)
     }
-
 
 
     Text(
@@ -64,7 +60,7 @@ fun LoginContent(uiState: State<LoginState>, viewModel: LoginViewModel) {
     )
 
     OutlinedTextField(
-        value = uiState.value.account,
+        value = uiState.account,
         singleLine = true,
         modifier = Modifier
             .fillMaxWidth(),
@@ -91,7 +87,7 @@ fun LoginContent(uiState: State<LoginState>, viewModel: LoginViewModel) {
         }
     )
     OutlinedTextField(
-        value = uiState.value.password,
+        value = uiState.password,
         singleLine = true,
         modifier = Modifier.fillMaxWidth(),
         onValueChange = { viewModel.send(LoginIntent.UpdatePassword(it)) },
@@ -108,7 +104,7 @@ fun LoginContent(uiState: State<LoginState>, viewModel: LoginViewModel) {
     )
 
     OutlinedTextField(
-        value = uiState.value.scAccount,
+        value = uiState.scAccount,
         singleLine = true,
         modifier = Modifier
             .fillMaxWidth()
@@ -128,10 +124,12 @@ fun LoginContent(uiState: State<LoginState>, viewModel: LoginViewModel) {
         horizontalArrangement = Arrangement.End,
         modifier = Modifier.fillMaxWidth()
     ) {
-        Button(
-            modifier = Modifier
-                .padding(start = 8.dp),
-            onClick = { viewModel.send(LoginIntent.Login) }
+        DebouncedButton(
+            modifier = Modifier.padding(start = 8.dp),
+            outline = false,
+            onClick = {
+                viewModel.send(LoginIntent.Login)
+            }
         ) {
             Text("Login")
         }
