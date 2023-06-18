@@ -42,7 +42,6 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
     private val secondClass = SecondClass(twfid, token)
 
     init {
-
         viewModelScope.launch {
             try {
                 //生成链接
@@ -54,12 +53,12 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
                 update(
                     _uiState.value.copy(
                         signInfo = signInfo,
-                        signOutTime = signInfo.signOutTime.ifEmpty {
+                        signOutTime = signInfo.signOutTime.substringBefore(".000").ifEmpty {
                             uiState.value.activity.endTime.before(
                                 10
                             )
                         },
-                        signInTime = signInfo.signInTime.ifEmpty {
+                        signInTime = signInfo.signInTime.substringBefore(".000").ifEmpty {
                             uiState.value.activity.startTime.after(
                                 10
                             )
@@ -68,7 +67,7 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
                     )
                 )
             } catch (e: Exception) {
-                Log.e(Companion.TAG, e.toString())
+                Log.e(TAG, e.toString())
                 update(uiState.value.copy(loading = false))
                 showSnackbar(e.message ?: e.toString())
             }
@@ -80,7 +79,7 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
     fun send(intent: InfoIntent) = viewModelScope.launch { onHandle(intent) }
 
     private suspend fun onHandle(infoIntent: InfoIntent) {
-        Log.i(Companion.TAG, infoIntent.toString())
+        Log.i(TAG, infoIntent.toString())
         when (infoIntent) {
             is InfoIntent.UpdateSignInTime -> {
                 val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
@@ -162,7 +161,7 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
                 throw Exception(res.message)
             }
         } catch (e: Exception) {
-            Log.e(Companion.TAG, e.toString())
+            Log.e(TAG, e.toString())
             update(uiState.value.copy(loading = false))
             showSnackbar(e.message ?: e.toString())
         }
@@ -188,7 +187,7 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
                 showSnackbar(res.data.msg)
             }
         } catch (e: Exception) {
-            Log.e(Companion.TAG, e.toString())
+            Log.e(TAG, e.toString())
             update(uiState.value.copy(loading = false))
             showSnackbar(e.message ?: e.toString())
         }

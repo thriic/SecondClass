@@ -8,5 +8,6 @@ data class PageState(
     val activities: List<SCActivity>,
     val showingDialog: Boolean,
     val dialogContent: String,
-    val loadMore: Boolean
+    val loadMore: Boolean,
+    val keyword: String
 )

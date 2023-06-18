@@ -41,6 +41,7 @@ import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -69,9 +70,9 @@ fun Page(viewModel: PageViewModel) {
 fun PageBox(viewModel: PageViewModel) {
     val pageState by viewModel.pageState.collectAsState()
     val listState: LazyListState = rememberLazyListState()
+    val keyword = rememberSaveable { mutableStateOf("") }
 
     if (pageState.showingDialog) Dialog(pageState = pageState, viewModel = viewModel)
-
 
     Box(
         Modifier
@@ -82,7 +83,11 @@ fun PageBox(viewModel: PageViewModel) {
             .fillMaxWidth()
             .statusBarsPadding()
             .padding(16.dp)) {
-        SearchBar(modifier = Modifier.align(Alignment.TopCenter), viewModel = viewModel)
+        SearchBar(
+            modifier = Modifier.align(Alignment.TopCenter),
+            viewModel = viewModel,
+            keyword = keyword
+        )
     }
 
     Box(modifier = Modifier.fillMaxWidth()) {
@@ -100,8 +105,12 @@ fun PageBox(viewModel: PageViewModel) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SearchBar(modifier: Modifier = Modifier, viewModel: PageViewModel) {
-    var text by rememberSaveable { mutableStateOf("") }
+fun SearchBar(
+    modifier: Modifier = Modifier,
+    viewModel: PageViewModel,
+    keyword: MutableState<String>
+) {
+    var text by keyword
     var active by rememberSaveable { mutableStateOf(false) }
     var expanded by rememberSaveable { mutableStateOf(false) }
 
@@ -110,8 +119,14 @@ fun SearchBar(modifier: Modifier = Modifier, viewModel: PageViewModel) {
         query = text,
         tonalElevation = SearchBarDefaults.Elevation.plus(16.dp),
         colors = SearchBarDefaults.colors(dividerColor = MaterialTheme.colorScheme.inversePrimary),
-        onQueryChange = { text = it },
-        onSearch = { active = false },
+        onQueryChange = {
+            if (it.isEmpty()) viewModel.send(PageIntent.Search(text))
+            text = it
+        },
+        onSearch = {
+            viewModel.send(PageIntent.Search(text))
+            active = false
+        },
         active = active,
         onActiveChange = {
             active = it
@@ -197,9 +212,14 @@ fun ActivityList(
                 )
             )
         }
-        Log.i("Page", "${pageState.activities.size}")
-        itemsIndexed(items = pageState.activities) { index, item ->
-            Log.i("Page", "index $index")
+        val activities = if (pageState.keyword.isNotEmpty()) pageState.activities.filter {
+            it.activityName.contains(pageState.keyword) ||
+                    it.activityAddress.contains(pageState.keyword) ||
+                    it.activityDec.contains(pageState.keyword) ||
+                    it.activityHost.contains(pageState.keyword)
+        } else pageState.activities
+        itemsIndexed(items = activities) { index, item ->
+            //判定是否符合搜索关键词
             val status = textFromStatus(item.activityStatus)
             ActivityRow(activity = item, status = status) {
                 if (item.id.contains("***")) {

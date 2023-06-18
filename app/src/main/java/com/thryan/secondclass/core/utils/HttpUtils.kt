@@ -87,7 +87,6 @@ class Requests(val url: String, val factory: Factory) {
             val jsonObject = JSON().apply {
                 block()
             }.jsonObject
-            println(jsonObject.toString())
             requestBody = jsonObject.toString().encodeToByteArray()
                 .toRequestBody(
                     "application/json;charset=UTF-8".toMediaTypeOrNull(),
@@ -132,6 +131,7 @@ suspend fun Response.awaitString(): String {
 class Form {
     val formBody = FormBody.Builder()
     infix fun String.to(value: String) {
+        println("form $this $value")
         formBody.add(this, value)
     }
 }
@@ -167,6 +167,7 @@ class Cookies {
 class JSON {
     val jsonObject = JSONObject()
     infix fun String.to(value: String) {
+        println("json $this $value")
         jsonObject.put(this, value)
     }
 }

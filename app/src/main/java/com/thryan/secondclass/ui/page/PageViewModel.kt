@@ -12,6 +12,7 @@ import com.thryan.secondclass.ui.info.Repository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 class PageViewModel(
@@ -28,7 +29,8 @@ class PageViewModel(
             showingDialog = false,
             dialogContent = "",
             activities = Repository.activities.value,
-            loadMore = true
+            loadMore = true,
+            keyword = ""
         )
     )
     val pageState: StateFlow<PageState> = _pageState.asStateFlow()
@@ -85,6 +87,10 @@ class PageViewModel(
                 if (res) currentPageNum += 1
                 else update(pageState.value.copy(loadMore = false))
             }
+
+            is PageIntent.Search -> {
+                update(pageState.value.copy(loadMore = intent.keyword.isEmpty(), keyword = intent.keyword))
+            }
         }
     }
 
@@ -100,7 +106,7 @@ class PageViewModel(
                 if (activities.data.rows.isEmpty()) {
                     false
                 } else {
-                    update(PageActions.LoadMore(activities.data.rows).reduce(pageState.value))
+                    update(PageActions.LoadMore(activities.data.rows).reduce(_pageState.value))
                     true
                 }
             } else throw Exception(activities.message)
