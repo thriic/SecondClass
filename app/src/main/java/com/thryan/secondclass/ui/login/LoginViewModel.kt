@@ -25,13 +25,14 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
     )
 
 
-    private val _uiState = MutableStateFlow(LoginState("", "", "", false, ""))
+    private val _uiState = MutableStateFlow(LoginState("", "", "", false, "", false))
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
 
     init {
         Repository.activities.value = emptyList()
         send(LoginIntent.GetPreference)
     }
+
     private suspend fun update(uiStates: LoginState) = _uiState.emit(uiStates)
 
     fun send(intent: LoginIntent) = viewModelScope.launch { onHandle(intent) }
@@ -39,7 +40,7 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
     private suspend fun onHandle(intent: LoginIntent) {
         when (intent) {
             is LoginIntent.Login -> {
-                Log.i(Companion.TAG,"login ${uiState.value.account}:${uiState.value.password}")
+                Log.i(TAG, "login ${uiState.value.account}:${uiState.value.password}")
                 login()
             }
 
@@ -66,6 +67,10 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
 
             is LoginIntent.CloseDialog -> {
                 update(uiState.value.copy(showDialog = false))
+            }
+
+            is LoginIntent.UpdatePasswordVisible -> {
+                update(uiState.value.copy(showPassword = intent.visible))
             }
         }
     }

@@ -12,8 +12,11 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -29,9 +32,12 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.thryan.secondclass.R
 import kotlinx.coroutines.delay
 
 
@@ -106,7 +112,19 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
         keyboardActions = KeyboardActions(
             onDone = { }
         ),
-        visualTransformation = PasswordVisualTransformation()
+        trailingIcon = {
+            IconButton(onClick = { viewModel.send(LoginIntent.UpdatePasswordVisible(!uiState.showPassword)) }) {
+                Icon(
+                    if (uiState.showPassword) painterResource(R.drawable.visibility)
+                    else painterResource(
+                        R.drawable.visibility_off
+                    ),
+                    "",
+                    modifier = Modifier.padding(8.dp)
+                )
+            }
+        },
+        visualTransformation = if (uiState.showPassword) VisualTransformation.None else PasswordVisualTransformation()
     )
 
     OutlinedTextField(

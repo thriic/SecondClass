@@ -309,7 +309,7 @@ fun LinkCard(uiState: InfoState, viewModel: InfoViewModel) {
     InfoCard {
         Text("签到签退链接(长按文本复制)", style = MaterialTheme.typography.titleMedium)
         SelectionContainer {
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Column {
                     DisableSelection {
                         Text("webvpn:", style = MaterialTheme.typography.bodySmall)
@@ -331,7 +331,7 @@ fun LinkCard(uiState: InfoState, viewModel: InfoViewModel) {
             }
 
         }
-        if (uiState.activity.isSign == "0") Row(
+        Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End

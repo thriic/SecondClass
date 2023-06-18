@@ -7,4 +7,5 @@ sealed class LoginIntent {
     data class UpdateAccount(val account: String) : LoginIntent()
     data class UpdatePassword(val password: String) : LoginIntent()
     data class UpdateSCAccount(val scAccount: String) : LoginIntent()
+    data class UpdatePasswordVisible(val visible: Boolean) : LoginIntent()
 }
