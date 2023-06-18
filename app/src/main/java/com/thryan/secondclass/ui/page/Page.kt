@@ -87,7 +87,7 @@ fun PageBox(viewModel: PageViewModel) {
 
     Box(modifier = Modifier.fillMaxWidth()) {
         if (pageState.loading)
-            Progress(pageState)
+            Progress(pageState.loadingMsg)
         else {
             ActivityList(
                 pageState = pageState,
@@ -163,14 +163,14 @@ fun MenuItem(text: String, onClick: () -> Unit) {
 }
 
 @Composable
-fun Progress(uiState: PageState) {
+fun Progress(text: String) {
     Column(
         modifier = Modifier.fillMaxSize(),
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         CircularProgressIndicator()
-        Text(uiState.loadingMsg, modifier = Modifier.padding(top = 16.dp))
+        Text(text = text, modifier = Modifier.padding(top = 16.dp))
     }
 }
 
@@ -198,14 +198,23 @@ fun ActivityList(
             )
         }
         Log.i("Page", "${pageState.activities.size}")
-        itemsIndexed(items = pageState.activities) { _, item ->
+        itemsIndexed(items = pageState.activities) { index, item ->
+            Log.i("Page", "index $index")
             val status = textFromStatus(item.activityStatus)
-            ActivityRow(activity = item, viewModel = viewModel, status = status) {
+            ActivityRow(activity = item, status = status) {
                 if (item.id.contains("***")) {
                     viewModel.send(PageIntent.ShowDialog(incompleteId))
                 } else
                     viewModel.send(PageIntent.OpenActivity(item.id))
             }
+            if (pageState.loadMore && pageState.activities.size - index < 2) {
+                viewModel.send(PageIntent.LoadMore)
+            }
+        }
+        if (pageState.loadMore) item {
+            //这里应该有个全部加载完成后显示”加载完毕“
+            //活动数量太多了，我相信没人无聊到拉完
+            Progress(text = "加载更多...")
         }
 
     }
@@ -216,7 +225,6 @@ fun ActivityList(
 @Composable
 fun ActivityRow(
     activity: SCActivity,
-    viewModel: PageViewModel,
     status: String,
     onClick: () -> Unit
 ) {

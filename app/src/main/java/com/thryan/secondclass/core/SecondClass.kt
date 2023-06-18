@@ -1,6 +1,7 @@
 package com.thryan.secondclass.core
 
 import com.thryan.secondclass.core.result.HttpResult
+import com.thryan.secondclass.core.result.PageInfo
 import com.thryan.secondclass.core.result.Rows
 import com.thryan.secondclass.core.result.SCActivity
 import com.thryan.secondclass.core.result.ScoreInfo
@@ -50,19 +51,20 @@ class SecondClass(private val twfid: String, var token: String = "") {
             }
         }
 
-       // {pageNo: 1, pageSize: 50, totalPage: 11, totalRows: 537,…}
+    // activityInfo/page?activityName=&activityStatus=&activityLx=&activityType=&pageSize=50&sf_request_type=ajax&pageNo=2
     /**
      * 获取活动
      * @return 活动list
      */
-    suspend fun getActivities(): HttpResult<Rows<SCActivity>> = requests
-        .get<Rows<SCActivity>> {
-            path("activityInfo/page?activityName=&activityStatus=&activityLx=&activityType=&pageSize=50&sf_request_type=ajax")
-            headers {
-                "sdp-app-session" to twfid
-                "Authorization" to "Bearer $token"
+    suspend fun getActivities(pageNo: Int = 1, pageSize: Int = 20): HttpResult<PageInfo> =
+        requests
+            .get<PageInfo> {
+                path("activityInfo/page?pageSize=$pageSize&pageNo=$pageNo&sf_request_type=ajax")
+                headers {
+                    "sdp-app-session" to twfid
+                    "Authorization" to "Bearer $token"
+                }
             }
-        }
 
 
     /**
@@ -126,7 +128,12 @@ class SecondClass(private val twfid: String, var token: String = "") {
      * @param activity 活动
      * @param signInfo 签到信息
      */
-    suspend fun signIn(activity: SCActivity, signInfo: SignInfo, signInTime: String = activity.startTime.after(10), signOutTime: String = activity.endTime.before(10)): HttpResult<String> = requests
+    suspend fun signIn(
+        activity: SCActivity,
+        signInfo: SignInfo,
+        signInTime: String = activity.startTime.after(10),
+        signOutTime: String = activity.endTime.before(10)
+    ): HttpResult<String> = requests
         .post {
             path("activityInfoSign/edit?sf_request_type=ajax")
             headers {

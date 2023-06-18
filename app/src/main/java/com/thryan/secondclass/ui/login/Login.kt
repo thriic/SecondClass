@@ -116,10 +116,8 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
             IconButton(onClick = { viewModel.send(LoginIntent.UpdatePasswordVisible(!uiState.showPassword)) }) {
                 Icon(
                     if (uiState.showPassword) painterResource(R.drawable.visibility)
-                    else painterResource(
-                        R.drawable.visibility_off
-                    ),
-                    "",
+                    else painterResource(R.drawable.visibility_off),
+                    "visible",
                     modifier = Modifier.padding(8.dp)
                 )
             }

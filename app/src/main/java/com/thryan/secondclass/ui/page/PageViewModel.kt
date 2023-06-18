@@ -27,19 +27,20 @@ class PageViewModel(
             loadingMsg = "",
             showingDialog = false,
             dialogContent = "",
-            activities = Repository.activities.value
+            activities = Repository.activities.value,
+            loadMore = true
         )
     )
     val pageState: StateFlow<PageState> = _pageState.asStateFlow()
 
 
-
     private lateinit var user: User
     private lateinit var scoreInfo: ScoreInfo
     private var secondClass = SecondClass(twfid)
+    private var currentPageNum = 1
 
     init {
-        Log.i(Companion.TAG, "PageViewModel Created")
+        Log.i(TAG, "PageViewModel Created")
     }
 
 
@@ -51,14 +52,13 @@ class PageViewModel(
                 if (Repository.activities.value.isEmpty()) login()
             }
 
-            is PageIntent.UpdateActivity ->{
+            is PageIntent.UpdateActivity -> {
                 update(pageState.value.copy(activities = Repository.activities.value))
             }
 
             is PageIntent.OpenActivity -> {
-                Log.i(Companion.TAG, "跳转界面")
+                Repository.activities.emit(pageState.value.activities)
                 navController.navigate("info?id=${intent.id}&twfid=${twfid}&token=${secondClass.token}")
-                //_oneTimeEvent.emit(UiEvent.Navigate(id = intent.id, twfid = twfid, token = secondClass.token))
             }
 
             is PageIntent.ShowDialog -> {
@@ -79,35 +79,43 @@ class PageViewModel(
             is PageIntent.CloseDialog -> {
                 update(pageState.value.copy(showingDialog = false))
             }
+
+            PageIntent.LoadMore -> {
+                val res = getActivities(currentPageNum)
+                if (res) currentPageNum += 1
+                else update(pageState.value.copy(loadMore = false))
+            }
         }
     }
 
     override fun onCleared() {
-        //Repository.activities.update { emptyList() }
-        Log.i(Companion.TAG, "clear pageViewModel")
+        Log.i(TAG, "clear pageViewModel")
     }
 
 
-    private suspend fun getActivities() {
+    private suspend fun getActivities(pageNo: Int = 1, pageSize: Int = 20): Boolean =
         try {
-            update(PageActions.Loading("获取活动信息").reduce(pageState.value))
-            val activities = secondClass.getActivities()
+            val activities = secondClass.getActivities(pageNo, pageSize)
             if (activities.success()) {
-                update(pageState.value.copy(activities = activities.data.rows))
-                Repository.activities.emit(activities.data.rows)
+                if (activities.data.rows.isEmpty()) {
+                    false
+                } else {
+                    update(PageActions.LoadMore(activities.data.rows).reduce(pageState.value))
+                    true
+                }
             } else throw Exception(activities.message)
         } catch (e: Exception) {
-            Log.e(Companion.TAG, e.toString())
+            Log.e(TAG, e.toString())
             update(PageActions.Dialog(e.message!!).reduce(pageState.value))
+            false
         }
-    }
 
 
     private suspend fun login() {
         try {
             update(PageActions.Loading("登录中").reduce(pageState.value))
             val res = secondClass.login(account)
-            Log.i(Companion.TAG, "login secondclass ${res.message}")
+            Log.i(TAG, "login secondclass ${res.message}")
             if (res.success()) {
                 Repository.secondClass = secondClass
                 update(PageActions.Loading("获取用户信息").reduce(pageState.value))
@@ -115,13 +123,16 @@ class PageViewModel(
                 this@PageViewModel.user = user.data
                 val scoreInfo = secondClass.getScoreInfo(this@PageViewModel.user)
                 this@PageViewModel.scoreInfo = scoreInfo.data
-                this@PageViewModel.getActivities()
+                //获取活动，第一次进入页面多加载些活动
+                update(PageActions.Loading("获取活动信息").reduce(pageState.value))
+                this@PageViewModel.getActivities(pageSize = 40)
+                currentPageNum = 3
                 update(PageActions.Loading(loading = false).reduce(pageState.value))
             } else {
                 update(PageActions.Dialog(res.message).reduce(pageState.value))
             }
         } catch (e: Exception) {
-            Log.e(Companion.TAG, e.toString())
+            Log.e(TAG, e.toString())
             if (e.message!!.contains("500 Server internal error")) update(
                 PageActions.Dialog(
                     "使用前请勿在其他端登录，请等待几分钟后重新登录"

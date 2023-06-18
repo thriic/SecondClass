@@ -18,7 +18,6 @@ import java.time.format.DateTimeFormatter
  */
 class ExampleUnitTest {
 
-
     @Test
     fun ser() {
         val json = Json {
@@ -46,19 +45,19 @@ class ExampleUnitTest {
 
     @Test
     fun checkWebvpn() = runBlocking {
-        val res = Webvpn.checkLogin("de41eb1f56b0b106")
+        val res = Webvpn.checkLogin("1602fd5210ef6c58")
         println(res)
     }
 
 
     @Test
     fun secondClass() = runBlocking {
-        val secondClass = SecondClass("de41eb1f56b0b106")
+        val secondClass = SecondClass("1602fd5210ef6c58")
         val res = secondClass.login("2022101063")
         println(res.message)
         if (res.success()) {
             println(res.data)
-            val activity = secondClass.getActivities()
+            val activity = secondClass.getActivities(1,20)
             if (activity.success())
                 println(activity.data.rows.size)
         }
@@ -74,7 +73,6 @@ class ExampleUnitTest {
     fun time() = runBlocking {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val dateTime = LocalDateTime.parse("2023-06-11 00:00:00", formatter)
-        dateTime
     }
 
 }
