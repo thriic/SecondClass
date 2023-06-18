@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 /**
  * @param id 活动id
- * @param activityStatus 活动状态
+ * @param activityStatus 活动状态 0报名中 1待开始 2进行中 3待完结 4完结审核中 5已完结
  * @param activityName 活动名称
  * @param startTime 开始时间
  * @param endTime 结束时间

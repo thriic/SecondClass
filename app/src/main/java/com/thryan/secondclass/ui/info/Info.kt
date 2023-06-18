@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.thryan.secondclass.R
 import com.thryan.secondclass.core.utils.signIn
+import com.thryan.secondclass.core.utils.textFromStatus
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -202,16 +203,7 @@ fun MainCard(uiState: InfoState) {
                 onClick = {},
                 enabled = false,
                 label = {
-                    Text(
-                        when (uiState.activity.activityStatus) {
-                            "0" -> "报名中"
-                            "1" -> "待开始"
-                            "2" -> "进行中"
-                            "3" -> "待完结"
-                            "5" -> "已完结"
-                            else -> "未知"
-                        }
-                    )
+                    Text(textFromStatus(uiState.activity.activityStatus))
                 },
                 colors = SuggestionChipDefaults.suggestionChipColors(disabledLabelColor = MaterialTheme.colorScheme.primary)
             )
@@ -244,7 +236,9 @@ fun SignCard(uiState: InfoState, viewModel: InfoViewModel) {
             style = MaterialTheme.typography.bodyMedium
         )
         Text("报名截止: " + uiState.activity.signTime, style = MaterialTheme.typography.bodyMedium)
-        if (uiState.activity.isSign == "0" && uiState.activity.activityStatus == "0") Row(
+        if(uiState.activity.activityStatus == "1" && uiState.activity.isSign == "0")
+            Text("", style = MaterialTheme.typography.labelLarge)
+        if (uiState.activity.isSign == "0" && (uiState.activity.activityStatus in "0")) Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End

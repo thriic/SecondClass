@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.thryan.secondclass.R
 import com.thryan.secondclass.core.result.SCActivity
+import com.thryan.secondclass.core.utils.textFromStatus
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -198,14 +199,7 @@ fun ActivityList(
         }
         Log.i("Page", "${pageState.activities.size}")
         itemsIndexed(items = pageState.activities) { _, item ->
-            val status = when (item.activityStatus) {
-                "0" -> if (item.isSign == "1") "已报名" else "报名中"
-                "1" -> "待开始"
-                "2" -> "进行中"
-                "3" -> "待完结"
-                "5" -> "已完结"
-                else -> "未知"
-            }
+            val status = textFromStatus(item.activityStatus)
             ActivityRow(activity = item, viewModel = viewModel, status = status) {
                 if (item.id.contains("***")) {
                     viewModel.send(PageIntent.ShowDialog(incompleteId))

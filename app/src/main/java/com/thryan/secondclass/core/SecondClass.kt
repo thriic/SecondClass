@@ -22,7 +22,7 @@ class SecondClass(private val twfid: String, var token: String = "") {
      * 登录第二课堂
      * @param account 学号
      * @param password 密码,默认为123456
-     * @return JSONResult(message="...",data="token")
+     * @return token
      */
     suspend fun login(account: String, password: String = "123456"): HttpResult<String> = requests
         .post {
@@ -50,7 +50,7 @@ class SecondClass(private val twfid: String, var token: String = "") {
             }
         }
 
-
+       // {pageNo: 1, pageSize: 50, totalPage: 11, totalRows: 537,…}
     /**
      * 获取活动
      * @return 活动list
@@ -84,6 +84,11 @@ class SecondClass(private val twfid: String, var token: String = "") {
         }
 
 
+    /**
+     * 报名活动 报名中，待开始，进行中的活动均可报名
+     * @param activity 活动
+     * @return SignResult
+     */
     suspend fun sign(activity: SCActivity): HttpResult<SignResult> = requests
         .post<SignResult> {
             path("activityInfoSign/add?sf_request_type=ajax")

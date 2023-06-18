@@ -44,6 +44,17 @@ enum class ActivityStatus {
     UNKNOWN
 }
 
+fun textFromStatus(status: String) =
+    when (status) {
+        "0" -> "报名中"
+        "1" -> "待开始"
+        "2" -> "进行中"
+        "3" -> "待完结"
+        "4" -> "完结审核中"
+        "5" -> "已完结"
+        else -> "未知"
+    }
+
 fun String.getActivityStatus() =
     when (this) {
         "0" -> ActivityStatus.ENROLLING
