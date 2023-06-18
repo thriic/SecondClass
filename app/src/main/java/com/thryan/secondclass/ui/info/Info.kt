@@ -236,8 +236,8 @@ fun SignCard(uiState: InfoState, viewModel: InfoViewModel) {
             style = MaterialTheme.typography.bodyMedium
         )
         Text("报名截止: " + uiState.activity.signTime, style = MaterialTheme.typography.bodyMedium)
-        if(uiState.activity.activityStatus == "1" && uiState.activity.isSign == "0")
-            Text("", style = MaterialTheme.typography.labelLarge)
+        if(uiState.activity.activityStatus in listOf("1","2") && uiState.activity.isSign == "0")
+            Text("报名待开始或进行中的活动可能失效", style = MaterialTheme.typography.labelMedium)
         if (uiState.activity.isSign == "0" && uiState.activity.activityStatus in listOf("0","1","2")) Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
