@@ -6,5 +6,6 @@ data class LoginState(
     val scAccount: String,
     val showDialog: Boolean,
     val message: String,
-    val showPassword: Boolean
+    val showPassword: Boolean,
+    val pending: Boolean
 )

@@ -234,7 +234,7 @@ fun ActivityList(
         if (pageState.loadMore) item {
             //这里应该有个全部加载完成后显示”加载完毕“
             //活动数量太多了，我相信没人无聊到拉完
-            Progress(text = "加载更多...")
+            Progress(text = "")
         }
 
     }

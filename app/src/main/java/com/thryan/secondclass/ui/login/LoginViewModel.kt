@@ -25,8 +25,10 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
     )
 
 
-    private val _uiState = MutableStateFlow(LoginState("", "", "", false, "", false))
+    private val _uiState = MutableStateFlow(LoginState("", "", "", false, "", false, false))
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
+
+    private var login = false
 
     init {
         Repository.activities.value = emptyList()
@@ -40,8 +42,22 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
     private suspend fun onHandle(intent: LoginIntent) {
         when (intent) {
             is LoginIntent.Login -> {
+                update(uiState.value.copy(pending = true))
                 Log.i(TAG, "login ${uiState.value.account}:${uiState.value.password}")
-                login()
+                val twfid = sharedPref.getString("twfid", "")
+                val (account, password, scAccount) = uiState.value
+                //检查缓存的twfid是否可用
+                if (!twfid.isNullOrEmpty() && Webvpn.checkLogin(twfid)) {
+                    withContext(Dispatchers.Main) {
+                        navController.navigate("page?twfid=${twfid}&account=${scAccount.ifEmpty { account }}") {
+                            popUpTo("login") { inclusive = true }
+                            launchSingleTop = true
+                        }
+                    }
+                } else {
+                    login(account, password, scAccount)
+                }
+                update(uiState.value.copy(pending = false))
             }
 
             is LoginIntent.GetPreference -> {
@@ -76,38 +92,31 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
     }
 
 
-    private suspend fun login() {
-        val twfid = sharedPref.getString("twfid", "")
-        val (account, password, scAccount) = uiState.value
-        //检查缓存的twfid是否可用
-        if (!twfid.isNullOrEmpty() && Webvpn.checkLogin(twfid)) {
+    private suspend fun login(account: String, password: String, scAccount: String = "") {
+        val response = Webvpn.login(account, password)
+        //登录
+        if (response.message == "请求成功") {
+            with(sharedPref.edit()) {
+                putString("twfid", response.data)
+                putString("account", account)
+                putString("password", password)
+                apply()
+            }
             withContext(Dispatchers.Main) {
-                navController.navigate("page?twfid=${twfid}&account=${scAccount.ifEmpty { account }}") {
+                navController.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
                     popUpTo("login") { inclusive = true }
                     launchSingleTop = true
                 }
             }
         } else {
-            val response = Webvpn.login(account, password)
-            //登录
-            if (response.message == "请求成功") {
-                with(sharedPref.edit()) {
-                    putString("twfid", response.data)
-                    putString("account", account)
-                    putString("password", password)
-                    apply()
-                }
-                withContext(Dispatchers.Main) {
-                    navController.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
-                        popUpTo("login") { inclusive = true }
-                        launchSingleTop = true
-                    }
-                }
-            } else {
-                update(uiState.value.copy(showDialog = true, message = response.message))
-            }
+            if (!login) {
+                login = true
+                login(account, password, scAccount)
+            } else update(uiState.value.copy(showDialog = true, message = response.message))
         }
+
     }
+
 
     companion object {
         private const val TAG = "LoginViewModel"

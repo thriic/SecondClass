@@ -69,4 +69,15 @@ object Webvpn {
 
     }
 
+    suspend fun logout(twfid: String) = requests
+        .post<String> {
+            path("logout.csp?apiversion=1")
+            headers {
+                cookie {
+                    "TWFID" to twfid
+                }
+            }
+            json { }
+        }//logout user success
+
 }

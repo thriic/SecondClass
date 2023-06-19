@@ -148,12 +148,12 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
     ) {
         DebouncedButton(
             modifier = Modifier.padding(start = 8.dp),
-            outline = false,
+            enabled = !uiState.pending,
             onClick = {
                 viewModel.send(LoginIntent.Login)
             }
         ) {
-            Text("Login")
+            Text(if (uiState.pending) "Login..." else "Login")
         }
     }
 }
@@ -185,7 +185,7 @@ private fun Dialog(
 @Composable
 fun DebouncedButton(
     modifier: Modifier = Modifier,
-    outline: Boolean = true,
+    outline: Boolean = false,
     enabled: Boolean = true,
     onClick: () -> Unit,
     content: @Composable (RowScope.() -> Unit)
