@@ -94,7 +94,7 @@ class PageViewModel @Inject constructor(
             }
 
             is PageIntent.Search -> {
-                if(intent.keyword != pageState.value.keyword) {
+                if (intent.keyword != pageState.value.keyword) {
                     update(
                         pageState.value.copy(
                             keyword = intent.keyword,

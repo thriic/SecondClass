@@ -95,7 +95,7 @@ class LoginViewModel @Inject constructor(
         if (response.message == "请求成功") {
             with(appDataStore) {
                 putTwfid(response.data)
-                Log.i(TAG,account)
+                Log.i(TAG, account)
                 putAccount(account)
                 putPassword(password)
             }

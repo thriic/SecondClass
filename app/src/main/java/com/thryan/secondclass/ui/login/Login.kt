@@ -140,7 +140,10 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
 //            onDone = { }
 //        )
 //    )
-    Text("登录较慢为正常情况，若无法登录，请检查本机是否能正常访问EasyConnect", style = MaterialTheme.typography.labelSmall)
+    Text(
+        "登录较慢为正常情况，若无法登录，请检查本机是否能正常访问EasyConnect",
+        style = MaterialTheme.typography.labelSmall
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.End,
