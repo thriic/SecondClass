@@ -14,3 +14,5 @@ cuit第二课堂安卓客户端
 
 ## 测试环境
 Redmi K50 Android13 校外网
+
+*具体实现详见[SecondClass.kt](https://github.com/thriic/SecondClass/blob/master/app/src/main/java/com/thryan/secondclass/core/SecondClass.kt)*
