@@ -10,13 +10,15 @@ import com.thryan.secondclass.core.result.SignResult
 import com.thryan.secondclass.core.result.User
 import com.thryan.secondclass.core.utils.Factory
 import com.thryan.secondclass.core.utils.Requests
+import com.thryan.secondclass.core.utils.ResponseType
 import com.thryan.secondclass.core.utils.after
 import com.thryan.secondclass.core.utils.before
 
 class SecondClass(private val twfid: String, var token: String = "") {
 
-    private val requests =
-        Requests("http://ekt-cuit-edu-cn.webvpn.cuit.edu.cn:8118/api/", Factory("JSON"))
+    private val requests by lazy {
+        Requests("http://ekt-cuit-edu-cn.webvpn.cuit.edu.cn:8118/api/", ResponseType.JSON)
+    }
 
 
     /**
@@ -27,7 +29,7 @@ class SecondClass(private val twfid: String, var token: String = "") {
      */
     suspend fun login(account: String, password: String = "123456"): HttpResult<String> = requests
         .post {
-            path("login?sf_request_type=ajax")
+            path = "login?sf_request_type=ajax"
             headers {
                 "sdp-app-session" to twfid
             }
@@ -40,11 +42,11 @@ class SecondClass(private val twfid: String, var token: String = "") {
 
     /**
      * 获取用户信息
-     * @return User
+     * @return User 用户信息
      */
     suspend fun getUser(): HttpResult<User> = requests
         .get<User> {
-            path("getLoginUser?sf_request_type=ajax")
+            path = "getLoginUser?sf_request_type=ajax"
             headers {
                 "sdp-app-session" to twfid
                 "Authorization" to "Bearer $token"
@@ -53,13 +55,20 @@ class SecondClass(private val twfid: String, var token: String = "") {
 
     // activityInfo/page?activityName=&activityStatus=&activityLx=&activityType=&pageSize=50&sf_request_type=ajax&pageNo=2
     /**
-     * 获取活动
-     * @return 活动list
+     * 获取指定页数的活动
+     * @param pageNo 页数
+     * @param pageSize 一页包含的活动数量
+     * @param activityName 活动关键词 用于搜索活动
+     * @return 活动页
      */
-    suspend fun getActivities(pageNo: Int = 1, pageSize: Int = 20): HttpResult<PageInfo> =
+    suspend fun getActivities(
+        pageNo: Int = 1,
+        pageSize: Int = 5,
+        activityName: String = ""
+    ): HttpResult<PageInfo> =
         requests
             .get<PageInfo> {
-                path("activityInfo/page?pageSize=$pageSize&pageNo=$pageNo&sf_request_type=ajax")
+                path = "activityInfo/page?activityName=$activityName&pageSize=$pageSize&pageNo=$pageNo&sf_request_type=ajax"
                 headers {
                     "sdp-app-session" to twfid
                     "Authorization" to "Bearer $token"
@@ -74,7 +83,7 @@ class SecondClass(private val twfid: String, var token: String = "") {
      */
     suspend fun getScoreInfo(user: User): HttpResult<ScoreInfo> = requests
         .get<ScoreInfo> {
-            path("studentScore/appDataInfo")
+            path = "studentScore/appDataInfo"
             params {
                 "userId" to user.id
                 "sf_request_type" to "ajax"
@@ -93,7 +102,7 @@ class SecondClass(private val twfid: String, var token: String = "") {
      */
     suspend fun sign(activity: SCActivity): HttpResult<SignResult> = requests
         .post<SignResult> {
-            path("activityInfoSign/add?sf_request_type=ajax")
+            path = "activityInfoSign/add?sf_request_type=ajax"
             headers {
                 "sdp-app-session" to twfid
                 "Authorization" to "Bearer $token"
@@ -106,12 +115,13 @@ class SecondClass(private val twfid: String, var token: String = "") {
 
     /**
      * 获取活动签到信息
+     * 活动id与签到所用id不同
      * @param activity 活动
      * @return SignInfo
      */
     suspend fun getSignInfo(activity: SCActivity): HttpResult<Rows<SignInfo>> = requests
         .get<Rows<SignInfo>> {
-            path("activityInfoSign/my")
+            path = "activityInfoSign/my"
             params {
                 "activityId" to activity.id
                 "sf_request_type" to "ajax"
@@ -125,8 +135,11 @@ class SecondClass(private val twfid: String, var token: String = "") {
 
     /**
      * 签到签退
+     * 可指定签到签退时间（听起来很离谱，但在成信大，这很正常）
      * @param activity 活动
      * @param signInfo 签到信息
+     * @param signInTime 签到时间
+     * @param signOutTime 签退时间
      */
     suspend fun signIn(
         activity: SCActivity,
@@ -135,7 +148,7 @@ class SecondClass(private val twfid: String, var token: String = "") {
         signOutTime: String = activity.endTime.before(10)
     ): HttpResult<String> = requests
         .post {
-            path("activityInfoSign/edit?sf_request_type=ajax")
+            path = "activityInfoSign/edit?sf_request_type=ajax"
             headers {
                 "sdp-app-session" to twfid
                 "Authorization" to "Bearer $token"
@@ -154,7 +167,7 @@ class SecondClass(private val twfid: String, var token: String = "") {
      */
     suspend fun getMyActivities(): HttpResult<List<SCActivity>> = requests
         .get<List<SCActivity>> {
-            path("activityInfo/my?sf_request_type=ajax")
+            path = "activityInfo/my?sf_request_type=ajax"
             headers {
                 "sdp-app-session" to twfid
                 "Authorization" to "Bearer $token"

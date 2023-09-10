@@ -3,9 +3,11 @@ package com.thryan.secondclass.ui.page
 import android.annotation.SuppressLint
 import android.util.Log
 import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -20,10 +22,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -34,8 +38,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
+import androidx.compose.material3.SearchBarDefaults.TonalElevation
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
 import androidx.compose.material3.Text
@@ -51,46 +58,114 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isContainer
+import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import com.thryan.secondclass.R
 import com.thryan.secondclass.core.result.SCActivity
 import com.thryan.secondclass.core.utils.textFromStatus
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun Page(viewModel: PageViewModel) {
     viewModel.send(PageIntent.UpdateActivity)
     PageBox(viewModel)
 }
 
-@OptIn(ExperimentalAnimationApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PageBox(viewModel: PageViewModel) {
     val pageState by viewModel.pageState.collectAsState()
     val listState: LazyListState = rememberLazyListState()
-    val keyword = rememberSaveable { mutableStateOf("") }
 
     if (pageState.showingDialog) Dialog(pageState = pageState, viewModel = viewModel)
 
+    var text by rememberSaveable { mutableStateOf("") }
+    var active by rememberSaveable { mutableStateOf(false) }
+
     Box(
         Modifier
-            .semantics {
-                isContainer = true
-            }
-            .zIndex(1f)
-            .fillMaxWidth()
-            .statusBarsPadding()
-            .padding(16.dp)) {
+            .fillMaxSize()
+            .semantics { isTraversalGroup = true }
+    ) {
+        var expanded by rememberSaveable { mutableStateOf(false) }
         SearchBar(
-            modifier = Modifier.align(Alignment.TopCenter),
-            viewModel = viewModel,
-            keyword = keyword
-        )
-    }
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .semantics { traversalIndex = -1f },
+            query = text,
+            onQueryChange = { text = it },
+            onSearch = {
+                viewModel.send(PageIntent.Search(text))
+                active = false
+            },
+            active = active,
+            onActiveChange = {
+                active = it
+            },
+            placeholder = { Text("搜索活动") },
+            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+            trailingIcon = {
+                IconButton(onClick = { expanded = true }) {
+                    Icon(Icons.Default.MoreVert, contentDescription = null)
+                    DropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false },
+                    ) {
+                        MenuItem("用户信息") {
+                            viewModel.send(PageIntent.ShowDialog(userInfo = true))
+                            expanded = false
+                        }
+                        val aboutString = stringResource(R.string.about)
+                        MenuItem("使用须知") {
+                            viewModel.send(PageIntent.ShowDialog(aboutString))
+                            expanded = false
+                        }
+                    }
+                }
+            },
+        ) {
+            LazyColumn {
+                item {
+                    ListItem(
+                        headlineContent = { Text("清空搜索框") },
+                        leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
+                        modifier = Modifier
+                            .clickable {
+                                text = ""
+                                active = false
+                                viewModel.send(PageIntent.Search(text))
+                            }
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+                item {
+                    ListItem(
+                        headlineContent = { Text("tips 1") },
+                        supportingContent = { Text("回车键搜索") },
+                        leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
+                        modifier = Modifier
+                            .clickable {}
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+                item {
+                    ListItem(
+                        headlineContent = { Text("tips 2") },
+                        supportingContent = { Text("是的，因为懒得做搜索历史所以用这些水布局") },
+                        leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
+                        modifier = Modifier
+                            .clickable {}
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 4.dp)
+                    )
+                }
+            }
+        }
 
-    Box(modifier = Modifier.fillMaxWidth()) {
         if (pageState.loading)
             Progress(pageState.loadingMsg)
         else {
@@ -103,71 +178,6 @@ fun PageBox(viewModel: PageViewModel) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SearchBar(
-    modifier: Modifier = Modifier,
-    viewModel: PageViewModel,
-    keyword: MutableState<String>
-) {
-    var text by keyword
-    var active by rememberSaveable { mutableStateOf(false) }
-    var expanded by rememberSaveable { mutableStateOf(false) }
-
-    DockedSearchBar(
-        modifier = modifier,
-        query = text,
-        tonalElevation = SearchBarDefaults.Elevation.plus(16.dp),
-        colors = SearchBarDefaults.colors(dividerColor = MaterialTheme.colorScheme.inversePrimary),
-        onQueryChange = {
-            if (it.isEmpty()) viewModel.send(PageIntent.Search(text))
-            text = it
-        },
-        onSearch = {
-            viewModel.send(PageIntent.Search(text))
-            active = false
-        },
-        active = active,
-        onActiveChange = {
-            active = it
-        },
-        placeholder = { Text("Search") },
-        leadingIcon = {
-            if (active)
-                IconButton(onClick = { active = false }) {
-                    Icon(Icons.Default.ArrowBack, null)
-                }
-            else
-                IconButton(onClick = { active = true }) {
-                    Icon(Icons.Default.Search, null)
-                }
-        },
-        trailingIcon = {
-            IconButton(onClick = {
-                expanded = true
-                active = false
-            }) {
-                Icon(Icons.Default.MoreVert, contentDescription = null)
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                ) {
-                    MenuItem("用户信息") {
-                        viewModel.send(PageIntent.ShowDialog(userInfo = true))
-                        expanded = false
-                    }
-                    val aboutString = stringResource(R.string.about)
-                    MenuItem("使用须知") {
-                        viewModel.send(PageIntent.ShowDialog(aboutString))
-                        expanded = false
-                    }
-                }
-            }
-        },
-    ) {
-
-    }
-}
 
 @Composable
 fun MenuItem(text: String, onClick: () -> Unit) {
@@ -189,7 +199,7 @@ fun Progress(text: String) {
     }
 }
 
-@ExperimentalAnimationApi
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityList(
@@ -212,13 +222,7 @@ fun ActivityList(
                 )
             )
         }
-        val activities = if (pageState.keyword.isNotEmpty()) pageState.activities.filter {
-            it.activityName.contains(pageState.keyword) ||
-                    it.activityAddress.contains(pageState.keyword) ||
-                    it.activityDec.contains(pageState.keyword) ||
-                    it.activityHost.contains(pageState.keyword)
-        } else pageState.activities
-        itemsIndexed(items = activities) { index, item ->
+        itemsIndexed(items = pageState.activities) { index, item ->
             //判定是否符合搜索关键词
             val status = textFromStatus(item.activityStatus)
             ActivityRow(activity = item, status = status) {
@@ -234,6 +238,7 @@ fun ActivityList(
         if (pageState.loadMore) item {
             //这里应该有个全部加载完成后显示”加载完毕“
             //活动数量太多了，我相信没人无聊到拉完
+            //Lazy
             Progress(text = "")
         }
 
@@ -255,7 +260,7 @@ fun ActivityRow(
             .fillMaxWidth()
             .padding(horizontal = padding),
         elevation = CardDefaults.cardElevation(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+//        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(
             modifier = Modifier
@@ -313,7 +318,6 @@ private fun Dialog(
     pageState: PageState,
     viewModel: PageViewModel
 ) {
-    //val activity = (LocalContext.current as Activity)
     AlertDialog(
         onDismissRequest = {
         },

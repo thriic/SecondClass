@@ -5,14 +5,14 @@ import com.thryan.secondclass.core.result.HttpResult
 import com.thryan.secondclass.core.utils.Factory
 import com.thryan.secondclass.core.utils.RSAUtils
 import com.thryan.secondclass.core.utils.Requests
+import com.thryan.secondclass.core.utils.ResponseType
 
 object Webvpn {
-    private val requests = Requests("https://webvpn.cuit.edu.cn/por/", Factory("XML"))
-
+    private val requests by lazy { Requests("https://webvpn.cuit.edu.cn/por/", ResponseType.XML) }
 
     suspend fun checkLogin(twfid: String): Boolean {
         val res = requests.get {
-            path("svpnSetting.csp?apiversion=1")
+            path = "svpnSetting.csp?apiversion=1"
             headers {
                 cookie {
                     "ENABLE_RANDCODE" to "0"
@@ -26,7 +26,7 @@ object Webvpn {
 
     private suspend fun auth(): HttpResult<VpnInfo> = requests
         .get<VpnInfo> {
-            path("login_auth.csp?apiversion=1")
+            path = "login_auth.csp?apiversion=1"
             headers {
                 "Content-Type" to "application/x-www-form-urlencoded"
                 cookie {
@@ -42,7 +42,7 @@ object Webvpn {
         val vpnInfo = auth.data
         val res = requests
             .post<String> {
-                path("login_psw.csp?anti_replay=1&encrypt=1&apiversion=1")
+                path = "login_psw.csp?anti_replay=1&encrypt=1&apiversion=1"
                 headers {
                     cookie {
                         "ENABLE_RANDCODE" to "0"
@@ -71,7 +71,7 @@ object Webvpn {
 
     suspend fun logout(twfid: String) = requests
         .post<String> {
-            path("logout.csp?apiversion=1")
+            path = "logout.csp?apiversion=1"
             headers {
                 cookie {
                     "TWFID" to twfid

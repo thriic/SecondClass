@@ -1,29 +1,26 @@
 package com.thryan.secondclass.ui.login
 
-import android.annotation.SuppressLint
-import android.content.Context
-import android.content.SharedPreferences
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavHostController
+import com.thryan.secondclass.ui.AppDataStore
 import com.thryan.secondclass.core.Webvpn
+import com.thryan.secondclass.ui.Navigator
 import com.thryan.secondclass.ui.info.Repository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import javax.inject.Inject
 
-@SuppressLint("StaticFieldLeak")
-class LoginViewModel(context: Context, private val navController: NavHostController) :
-    ViewModel() {
-
-    private val sharedPref: SharedPreferences = context.getSharedPreferences(
-        "com.thryan.secondclass.PREFERENCE", Context.MODE_PRIVATE
-    )
-
+@HiltViewModel
+class LoginViewModel @Inject constructor(
+    private val appDataStore: AppDataStore,
+    private val navigator: Navigator
+) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginState("", "", "", false, "", false, false))
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
@@ -44,12 +41,12 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
             is LoginIntent.Login -> {
                 update(uiState.value.copy(pending = true))
                 Log.i(TAG, "login ${uiState.value.account}:${uiState.value.password}")
-                val twfid = sharedPref.getString("twfid", "")
+                val twfid = appDataStore.getTwfid("")
                 val (account, password, scAccount) = uiState.value
                 //检查缓存的twfid是否可用
-                if (!twfid.isNullOrEmpty() && Webvpn.checkLogin(twfid)) {
+                if (twfid.isNotEmpty() && Webvpn.checkLogin(twfid)) {
                     withContext(Dispatchers.Main) {
-                        navController.navigate("page?twfid=${twfid}&account=${scAccount.ifEmpty { account }}") {
+                        navigator.navigate("page?twfid=${twfid}&account=${scAccount.ifEmpty { account }}") {
                             popUpTo("login") { inclusive = true }
                             launchSingleTop = true
                         }
@@ -63,8 +60,8 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
             is LoginIntent.GetPreference -> {
                 update(
                     uiState.value.copy(
-                        account = sharedPref.getString("account", "")!!,
-                        password = sharedPref.getString("password", "")!!
+                        account = appDataStore.getAccount(""),
+                        password = appDataStore.getPassword("")
                     )
                 )
             }
@@ -96,14 +93,14 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
         val response = Webvpn.login(account, password)
         //登录
         if (response.message == "请求成功") {
-            with(sharedPref.edit()) {
-                putString("twfid", response.data)
-                putString("account", account)
-                putString("password", password)
-                apply()
+            with(appDataStore) {
+                putTwfid(response.data)
+                Log.i(TAG,account)
+                putAccount(account)
+                putPassword(password)
             }
             withContext(Dispatchers.Main) {
-                navController.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
+                navigator.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
                     popUpTo("login") { inclusive = true }
                     launchSingleTop = true
                 }
@@ -112,7 +109,15 @@ class LoginViewModel(context: Context, private val navController: NavHostControl
             if (!login) {
                 login = true
                 login(account, password, scAccount)
-            } else update(uiState.value.copy(showDialog = true, message = response.message))
+            } else {
+                val msg = when {
+                    response.message.contains("CAPTCHA required") -> "需要验证码，请一段时间后再试"
+                    response.message.contains("Invalid username or password") -> "账号或密码错误"
+                    response.message.contains("maybe attacked") -> "尝试次数过多，一段时间后再试"
+                    else -> response.message
+                }
+                update(uiState.value.copy(showDialog = true, message = response.message))
+            }
         }
 
     }

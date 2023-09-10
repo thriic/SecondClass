@@ -3,6 +3,7 @@ package com.thryan.secondclass.ui.info
 import android.util.Log
 import androidx.compose.material3.SnackbarDuration
 import androidx.compose.material3.SnackbarHostState
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thryan.secondclass.core.SecondClass
@@ -12,14 +13,23 @@ import com.thryan.secondclass.core.utils.after
 import com.thryan.secondclass.core.utils.before
 import com.thryan.secondclass.core.utils.success
 import com.thryan.secondclass.core.utils.toLocalDateTime
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
+import javax.inject.Inject
 
-class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() {
+@HiltViewModel
+class InfoViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : ViewModel() {
+
+    val id = savedStateHandle.get<String>("id")!!
+    private val twfid = savedStateHandle.get<String>("twfid")!!
+    private val token = savedStateHandle.get<String>("token")!!
+    private val secondClass = SecondClass(twfid, token)
+
     private val _uiState =
         MutableStateFlow(
             InfoState(
@@ -39,7 +49,6 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
 
     val snackbarState = SnackbarHostState()
 
-    private val secondClass = SecondClass(twfid, token)
 
     init {
         viewModelScope.launch {
@@ -88,7 +97,7 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
                 val localDateTime = infoIntent.signInTime.atDate(dateTime)
                 if (localDateTime.isBefore(uiState.value.signOutTime.toLocalDateTime())) {
                     val timeString = localDateTime.format(formatter)
-                    Log.i(Companion.TAG, timeString)
+                    Log.i(TAG, timeString)
                     update(uiState.value.copy(signInTime = timeString))
                 } else {
                     showSnackbar("签到时间不得晚于签退时间")
@@ -102,7 +111,7 @@ class InfoViewModel(val id: String, twfid: String, token: String) : ViewModel() 
                 val localDateTime = infoIntent.signOutTime.atDate(dateTime)
                 if (localDateTime.isAfter(uiState.value.signInTime.toLocalDateTime())) {
                     val timeString = localDateTime.format(formatter)
-                    Log.i(Companion.TAG, timeString)
+                    Log.i(TAG, timeString)
                     update(uiState.value.copy(signOutTime = timeString))
                 } else {
                     showSnackbar("签退时间不得早于签到时间")

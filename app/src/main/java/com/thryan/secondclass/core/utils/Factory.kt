@@ -5,10 +5,12 @@ import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import com.thryan.secondclass.core.result.HttpResult
 
-class Factory(val mode: String) {
+//这依托shit是谁写的
+//是我啊，没事了
+class Factory(val type: ResponseType) {
     inline fun <reified T> convert(value: String): HttpResult<T> =
-        when (mode) {
-            "XML" -> {
+        when (type) {
+            ResponseType.XML -> {
                 val message = if (value.contains("Message")) value.substringAfter("<Message>")
                     .substringBefore("</Message>").replace("<![CDATA[", "").replace("]]>", "")
                 else throw Exception("Webvpn验证失败")
@@ -28,7 +30,7 @@ class Factory(val mode: String) {
                 }
             }
 
-            "JSON" -> {
+            ResponseType.JSON -> {
                 if (value.contains("Server internal error")) throw Exception("500 Server internal error")
                 if (value.contains("<html>")) throw Exception("webvpn登录失败")
                 val json = Json {
@@ -45,4 +47,8 @@ class Factory(val mode: String) {
             else -> throw Exception("未知的类型")
         }
 
+}
+
+enum class ResponseType {
+    XML, JSON
 }

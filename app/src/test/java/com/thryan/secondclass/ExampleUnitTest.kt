@@ -35,7 +35,7 @@ class ExampleUnitTest {
 
     @Test
     fun web() = runBlocking {
-        val re = Webvpn.login("2022101063", "")
+        val re = Webvpn.login("", "")
         if (re.success()) {
             println(re.message + " " + re.data)
         } else {

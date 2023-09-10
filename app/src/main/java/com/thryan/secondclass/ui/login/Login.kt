@@ -104,7 +104,7 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
         modifier = Modifier.fillMaxWidth(),
         onValueChange = { viewModel.send(LoginIntent.UpdatePassword(it)) },
         label = { Text("密码") },
-        placeholder = { Text("webvpn/教务处密码") },
+        placeholder = { Text("EasyConnect/教务处密码") },
         isError = false,
         keyboardOptions = KeyboardOptions.Default.copy(
             imeAction = ImeAction.Done
@@ -125,22 +125,22 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
         visualTransformation = if (uiState.showPassword) VisualTransformation.None else PasswordVisualTransformation()
     )
 
-    OutlinedTextField(
-        value = uiState.scAccount,
-        singleLine = true,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(top = 8.dp),
-        onValueChange = { viewModel.send(LoginIntent.UpdateSCAccount(it)) },
-        label = { Text("二课账号(可不填)") },
-        keyboardOptions = KeyboardOptions.Default.copy(
-            imeAction = ImeAction.Done
-        ),
-        keyboardActions = KeyboardActions(
-            onDone = { }
-        )
-    )
-    Text("不填则使用登录webvpn的学号和默认密码", style = MaterialTheme.typography.labelSmall)
+//    OutlinedTextField(
+//        value = uiState.scAccount,
+//        singleLine = true,
+//        modifier = Modifier
+//            .fillMaxWidth()
+//            .padding(top = 8.dp),
+//        onValueChange = { viewModel.send(LoginIntent.UpdateSCAccount(it)) },
+//        label = { Text("二课账号(可不填)") },
+//        keyboardOptions = KeyboardOptions.Default.copy(
+//            imeAction = ImeAction.Done
+//        ),
+//        keyboardActions = KeyboardActions(
+//            onDone = { }
+//        )
+//    )
+    Text("登录较慢为正常情况，若无法登录，请检查本机是否能正常访问EasyConnect", style = MaterialTheme.typography.labelSmall)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.End,

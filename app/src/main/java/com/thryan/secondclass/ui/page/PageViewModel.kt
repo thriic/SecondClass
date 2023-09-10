@@ -1,24 +1,26 @@
 package com.thryan.secondclass.ui.page
 
 import android.util.Log
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.navigation.NavHostController
 import com.thryan.secondclass.core.SecondClass
 import com.thryan.secondclass.core.result.ScoreInfo
 import com.thryan.secondclass.core.result.User
 import com.thryan.secondclass.core.utils.success
+import com.thryan.secondclass.ui.Navigator
 import com.thryan.secondclass.ui.info.Repository
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import javax.inject.Inject
 
-class PageViewModel(
-    private val navController: NavHostController,
-    val twfid: String,
-    val account: String
+@HiltViewModel
+class PageViewModel @Inject constructor(
+    private val navigator: Navigator,
+    savedStateHandle: SavedStateHandle
 ) :
     ViewModel() {
 
@@ -38,11 +40,14 @@ class PageViewModel(
 
     private lateinit var user: User
     private lateinit var scoreInfo: ScoreInfo
+    private val twfid = savedStateHandle.get<String>("twfid") ?: throw Exception()
+    private val account = savedStateHandle.get<String>("account") ?: throw Exception()
     private var secondClass = SecondClass(twfid)
     private var currentPageNum = 1
 
     init {
         Log.i(TAG, "PageViewModel Created")
+        send(PageIntent.Init)
     }
 
 
@@ -60,7 +65,7 @@ class PageViewModel(
 
             is PageIntent.OpenActivity -> {
                 Repository.activities.emit(pageState.value.activities)
-                navController.navigate("info?id=${intent.id}&twfid=${twfid}&token=${secondClass.token}")
+                navigator.navigate("info?id=${intent.id}&twfid=${twfid}&token=${secondClass.token}")
             }
 
             is PageIntent.ShowDialog -> {
@@ -89,7 +94,16 @@ class PageViewModel(
             }
 
             is PageIntent.Search -> {
-                update(pageState.value.copy(loadMore = intent.keyword.isEmpty(), keyword = intent.keyword))
+                if(intent.keyword != pageState.value.keyword) {
+                    update(
+                        pageState.value.copy(
+                            keyword = intent.keyword,
+                            activities = emptyList()
+                        )
+                    )
+                    currentPageNum = 1
+                    getActivities()
+                }
             }
         }
     }
@@ -99,9 +113,9 @@ class PageViewModel(
     }
 
 
-    private suspend fun getActivities(pageNo: Int = 1, pageSize: Int = 20): Boolean =
+    private suspend fun getActivities(pageNo: Int = 1, pageSize: Int = 5): Boolean =
         try {
-            val activities = secondClass.getActivities(pageNo, pageSize)
+            val activities = secondClass.getActivities(pageNo, pageSize, pageState.value.keyword)
             if (activities.success()) {
                 if (activities.data.rows.isEmpty()) {
                     false
@@ -129,9 +143,9 @@ class PageViewModel(
                 this@PageViewModel.user = user.data
                 val scoreInfo = secondClass.getScoreInfo(this@PageViewModel.user)
                 this@PageViewModel.scoreInfo = scoreInfo.data
-                //获取活动，第一次进入页面多加载些活动
+                //获取活动
                 update(PageActions.Loading("获取活动信息").reduce(pageState.value))
-                this@PageViewModel.getActivities(pageSize = 40)
+                this@PageViewModel.getActivities()
                 currentPageNum = 3
                 update(PageActions.Loading(loading = false).reduce(pageState.value))
             } else {

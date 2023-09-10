@@ -14,6 +14,7 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.core.view.WindowCompat
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -29,9 +30,15 @@ import com.thryan.secondclass.ui.page.Page
 import com.thryan.secondclass.ui.page.PageIntent
 import com.thryan.secondclass.ui.page.PageViewModel
 import com.thryan.secondclass.ui.theme.SecondClassTheme
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 
+@AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    @Inject
+    lateinit var navigator: Navigator
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -45,7 +52,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     AppNavHost(
                         Modifier.fillMaxSize(),
-                        context = applicationContext
+                        navigator = navigator
                     )
                 }
             }
@@ -58,10 +65,10 @@ fun AppNavHost(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
     startDestination: String = "login",
-    context: Context
+    navigator: Navigator
 ) {
-    var pageViewModel: PageViewModel? = null
-    var infoViewModel: InfoViewModel? = null
+    navigator.setController(navController)
+
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -70,7 +77,8 @@ fun AppNavHost(
         Log.i("Main", "NavBuilder")
         composable("login") {
 
-            Login(viewModel = LoginViewModel(context, navController))
+            val viewModel = hiltViewModel<LoginViewModel>()
+            Login(viewModel = viewModel)
         }
         composable(
             "page?twfid={twfid}&account={account}",
@@ -80,20 +88,9 @@ fun AppNavHost(
             )
         ) { backStackEntry ->
             Log.i("Main", "我他妈recompose")
-            val twfid = backStackEntry.arguments?.getString("twfid")
-            val account = backStackEntry.arguments?.getString("account")
-            //防止viewModel多次创建多次发起网络请求
-            if (pageViewModel == null|| checkNotNull(account) != pageViewModel!!.account) {
-                pageViewModel = PageViewModel(
-                    navController,
-                    twfid = checkNotNull(twfid),
-                    account = checkNotNull(account)
-                )
-                pageViewModel!!.send(PageIntent.Init)
-            }
-            Page(
-                viewModel = pageViewModel!!
-            )
+            //非常好注入，❤来自驾驶学校
+            val pageViewModel = hiltViewModel<PageViewModel>(backStackEntry)
+            Page(viewModel = pageViewModel)
         }
         composable(
             "info?id={id}&twfid={twfid}&token={token}",
@@ -104,19 +101,10 @@ fun AppNavHost(
             )
         ) { backStackEntry ->
             Log.i("Main", "我他妈recompose")
-            val id = backStackEntry.arguments?.getString("id")
-            val twfid = backStackEntry.arguments?.getString("twfid")
-            val token = backStackEntry.arguments?.getString("token")
-            if (infoViewModel == null || checkNotNull(id) != infoViewModel!!.id) {
-                infoViewModel = InfoViewModel(
-                    id = checkNotNull(id),
-                    twfid = checkNotNull(twfid),
-                    token = checkNotNull(token)
-                )
-            }
+            val infoViewModel = hiltViewModel<InfoViewModel>(backStackEntry)
             Info(
                 navController,
-                infoViewModel!!
+                infoViewModel
             )
 
         }

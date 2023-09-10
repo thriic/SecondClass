@@ -16,7 +16,9 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 
-class Requests(val url: String, val factory: Factory) {
+class Requests(val url: String, responseType: ResponseType) {
+
+    val factory = Factory(responseType)
 
     suspend inline fun <reified T> get(block: Request.() -> Unit): HttpResult<T> {
         val request = Request().apply {
@@ -57,15 +59,15 @@ class Requests(val url: String, val factory: Factory) {
     inner class Request {
         val builder = okhttp3.Request.Builder()
         private var params: String = ""
-        private var path: String = ""
+        var path: String = ""
         val api: String
             get() = path + params
         var requestBody: RequestBody? = null
 
 
-        fun path(path: String) {
-            this.path = path
-        }
+//        fun path(path: String) {
+//            this.path = path
+//        }
 
         fun params(block: Params.() -> Unit) {
             params = "?" + Params().apply {
@@ -78,7 +80,6 @@ class Requests(val url: String, val factory: Factory) {
                 block()
             }.map.toMap()
             for ((k, v) in headers) {
-                println("add $k $v")
                 builder.addHeader(k, v)
             }
         }
@@ -131,7 +132,6 @@ suspend fun Response.awaitString(): String {
 class Form {
     val formBody = FormBody.Builder()
     infix fun String.to(value: String) {
-        println("form $this $value")
         formBody.add(this, value)
     }
 }
@@ -167,7 +167,6 @@ class Cookies {
 class JSON {
     val jsonObject = JSONObject()
     infix fun String.to(value: String) {
-        println("json $this $value")
         jsonObject.put(this, value)
     }
 }
