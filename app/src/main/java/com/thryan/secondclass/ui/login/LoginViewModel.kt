@@ -3,12 +3,16 @@ package com.thryan.secondclass.ui.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.thryan.secondclass.ui.AppDataStore
-import com.thryan.secondclass.core.Webvpn
+import com.thryan.secondclass.core.WebVpn
+import com.thryan.secondclass.core.result.HttpResult
+import com.thryan.secondclass.core.result.VpnInfo
 import com.thryan.secondclass.ui.Navigator
 import com.thryan.secondclass.ui.info.Repository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -25,11 +29,31 @@ class LoginViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(LoginState("", "", "", false, "", false, false))
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
 
+    var auth: VpnInfo? = null
+    var job: Job
+    var checkJob: Job? = null
     private var login = false
 
     init {
         Repository.activities.value = emptyList()
-        send(LoginIntent.GetPreference)
+        send(LoginIntent.Init)
+        job = viewModelScope.launch(Dispatchers.IO) {
+            //若超过10分钟则不检查twfid可用性
+            val lastTime = appDataStore.getLastTime("").also(::println)
+            if (lastTime.isNotEmpty() && System.currentTimeMillis() - lastTime.toLong() < 10 * 60 * 1000) {
+                Log.i(TAG, "距离上次登录时间小于10分钟，检查twfid可用性")
+                val twfid = appDataStore.getTwfid("")
+                if (twfid.isNotEmpty()) {
+                    Log.i(TAG, "检查twfid")
+                    login = WebVpn.checkLogin(twfid)
+                    Log.i(TAG, "twfid有效")
+                    return@launch
+                }
+            }
+            Log.i(TAG, "twfid无效，预加载auth")
+            auth = WebVpn.auth().data
+            Log.i(TAG, "auth加载完毕")
+        }
     }
 
     private suspend fun update(uiStates: LoginState) = _uiState.emit(uiStates)
@@ -43,8 +67,9 @@ class LoginViewModel @Inject constructor(
                 Log.i(TAG, "login ${uiState.value.account}:${uiState.value.password}")
                 val twfid = appDataStore.getTwfid("")
                 val (account, password, scAccount) = uiState.value
-                //检查缓存的twfid是否可用
-                if (twfid.isNotEmpty() && Webvpn.checkLogin(twfid)) {
+                job.join()
+                if (login) {
+                    appDataStore.putLastTime(System.currentTimeMillis().toString().also(::println))
                     withContext(Dispatchers.Main) {
                         navigator.navigate("page?twfid=${twfid}&account=${scAccount.ifEmpty { account }}") {
                             popUpTo("login") { inclusive = true }
@@ -58,12 +83,7 @@ class LoginViewModel @Inject constructor(
             }
 
             is LoginIntent.GetPreference -> {
-                update(
-                    uiState.value.copy(
-                        account = appDataStore.getAccount(""),
-                        password = appDataStore.getPassword("")
-                    )
-                )
+
             }
 
             is LoginIntent.UpdateAccount -> {
@@ -85,42 +105,48 @@ class LoginViewModel @Inject constructor(
             is LoginIntent.UpdatePasswordVisible -> {
                 update(uiState.value.copy(showPassword = intent.visible))
             }
+
+            is LoginIntent.Init -> {
+                update(
+                    uiState.value.copy(
+                        account = appDataStore.getAccount(""),
+                        password = appDataStore.getPassword("")
+                    )
+                )
+
+            }
         }
     }
 
 
-    private suspend fun login(account: String, password: String, scAccount: String = "") {
-        val response = Webvpn.login(account, password)
-        //登录
-        if (response.message == "请求成功") {
-            with(appDataStore) {
-                putTwfid(response.data)
-                Log.i(TAG, account)
-                putAccount(account)
-                putPassword(password)
-            }
-            withContext(Dispatchers.Main) {
-                navigator.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
-                    popUpTo("login") { inclusive = true }
-                    launchSingleTop = true
+    private suspend fun login(account: String, password: String, scAccount: String = "") =
+        withContext(Dispatchers.IO) {
+            checkJob?.join()
+            val response = WebVpn.login(auth!!, account, password)
+            //登录
+            if (response.message == "请求成功") {
+                Log.i(TAG, "appDataStore")
+                with(appDataStore) {
+                    putTwfid(response.data)
+                    putAccount(account)
+                    putPassword(password)
+                    putLastTime(System.currentTimeMillis().toString())
                 }
-            }
-        } else {
-            if (!login) {
-                login = true
-                login(account, password, scAccount)
+                Log.i(TAG, "appDataStore complete")
+                withContext(Dispatchers.Main) {
+                    navigator.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
+                        popUpTo("login") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
             } else {
-                val msg = when {
-                    response.message.contains("CAPTCHA required") -> "需要验证码，请一段时间后再试"
-                    response.message.contains("Invalid username or password") -> "账号或密码错误"
-                    response.message.contains("maybe attacked") -> "尝试次数过多，一段时间后再试"
-                    else -> response.message
+                checkJob = launch {
+                    auth = WebVpn.auth().data
                 }
                 update(uiState.value.copy(showDialog = true, message = response.message))
             }
-        }
 
-    }
+        }
 
 
     companion object {

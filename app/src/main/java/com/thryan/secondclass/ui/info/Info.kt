@@ -52,6 +52,7 @@ import androidx.navigation.NavController
 import com.thryan.secondclass.R
 import com.thryan.secondclass.core.utils.signIn
 import com.thryan.secondclass.core.utils.textFromStatus
+import com.thryan.secondclass.core.utils.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,13 +84,14 @@ fun Info(navController: NavController, viewModel: InfoViewModel) {
             }
         }
     )
-    if (uiState.showSignOutTimePicker || uiState.showSignInTimePicker) {
-        TimePicker(title = "选择时间", viewModel = viewModel) {
-            if (uiState.showSignOutTimePicker) {
+    if (uiState.showSignOutTimePicker) {
+        TimePicker(title = "选择时间", viewModel = viewModel, initialTime = uiState.signOutTime.toLocalDateTime().toLocalTime() ) {
                 viewModel.send(InfoIntent.UpdateSignOutTime(it))
-            } else {
                 viewModel.send(InfoIntent.UpdateSignInTime(it))
-            }
+        }
+    }else if(uiState.showSignInTimePicker){
+        TimePicker(title = "选择时间", viewModel = viewModel, initialTime = uiState.signInTime.toLocalDateTime().toLocalTime() ) {
+            viewModel.send(InfoIntent.UpdateSignInTime(it))
         }
     } else {
         LocalFocusManager.current.clearFocus()

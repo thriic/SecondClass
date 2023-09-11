@@ -17,7 +17,8 @@ fun TimePicker(
     modifier: Modifier = Modifier,
     title: String,
     viewModel: InfoViewModel,
-    onTimeChange: (LocalTime)->Unit
+    initialTime: LocalTime,
+    onTimeChange: (LocalTime) -> Unit
 ) {
     TimePickerDialog(
         onDismissRequest = {
@@ -25,11 +26,12 @@ fun TimePicker(
         },
         onTimeChange = {
             onTimeChange(it)
-            Log.i("TimePicker",it.toString())
+            Log.i("TimePicker", it.toString())
             viewModel.send(InfoIntent.CloseDialog)
         },
         modifier = modifier,
         is24HourFormat = true,
-        title = { Text(title) }
+        title = { Text(title) },
+        initialTime = initialTime
     )
 }

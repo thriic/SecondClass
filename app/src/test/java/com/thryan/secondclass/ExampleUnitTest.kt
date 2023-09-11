@@ -1,7 +1,7 @@
 package com.thryan.secondclass
 
 import com.thryan.secondclass.core.SecondClass
-import com.thryan.secondclass.core.Webvpn
+import com.thryan.secondclass.core.WebVpn
 import com.thryan.secondclass.core.result.HttpResult
 import com.thryan.secondclass.core.utils.success
 import kotlinx.coroutines.runBlocking
@@ -35,7 +35,7 @@ class ExampleUnitTest {
 
     @Test
     fun web() = runBlocking {
-        val re = Webvpn.login("", "")
+        val re = WebVpn.login("", "")
         if (re.success()) {
             println(re.message + " " + re.data)
         } else {
@@ -45,7 +45,7 @@ class ExampleUnitTest {
 
     @Test
     fun checkWebvpn() = runBlocking {
-        val res = Webvpn.checkLogin("1602fd5210ef6c58")
+        val res = WebVpn.checkLogin("1602fd5210ef6c58")
         println(res)
     }
 

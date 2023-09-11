@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.thryan.secondclass.model.Constant.KEY_ACCOUNT
+import com.thryan.secondclass.model.Constant.KEY_LASTTIME
 import com.thryan.secondclass.model.Constant.KEY_PASSWORD
 import com.thryan.secondclass.model.Constant.KEY_TWFID
 import dagger.Module
@@ -33,6 +34,10 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
         putString(KEY_TWFID, value)
     }
 
+    suspend fun putLastTime(value: String){
+        putString(KEY_LASTTIME,value)
+    }
+
 
     fun getAccount(default: String): String = runBlocking {
         val string = getString(KEY_ACCOUNT)
@@ -46,6 +51,11 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
 
     fun getTwfid(default: String): String = runBlocking {
         val string = getString(KEY_TWFID)
+        return@runBlocking string ?: default
+    }
+
+    fun getLastTime(default: String): String = runBlocking {
+        val string = getString(KEY_LASTTIME)
         return@runBlocking string ?: default
     }
 

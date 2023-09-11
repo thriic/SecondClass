@@ -1,6 +1,7 @@
 package com.thryan.secondclass.ui.login
 
 sealed class LoginIntent {
+    object Init : LoginIntent()
     object Login : LoginIntent()
     object GetPreference : LoginIntent()
     object CloseDialog : LoginIntent()
