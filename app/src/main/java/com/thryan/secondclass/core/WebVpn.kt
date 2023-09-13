@@ -36,7 +36,6 @@ object WebVpn {
 
 
     suspend fun login(auth: VpnInfo, account: String, password: String): HttpResult<String> {
-        println("account $account pwd $password")
         val res = requests
             .post<String> {
                 path = "login_psw.csp?anti_replay=1&encrypt=1&apiversion=1"

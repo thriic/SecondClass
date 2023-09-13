@@ -32,6 +32,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -141,7 +142,7 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
         )
     )
     Text(
-        "登录较慢为正常情况，若无法登录，请检查本机是否能正常访问EasyConnect",
+        stringResource(R.string.login_tips),
         style = MaterialTheme.typography.labelSmall
     )
     Row(

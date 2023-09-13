@@ -89,7 +89,6 @@ class LoginViewModel @Inject constructor(
                     } else {
                         Log.i(TAG, "尝试登录")
                         login(account, password, scPassword = scPassword)
-                        Log.i(TAG, "登录结束")
                     }
                 } catch (e: Exception) {
                     Log.i(TAG, "error $e")
