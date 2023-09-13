@@ -4,22 +4,23 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.thryan.secondclass.core.SecondClass
-import com.thryan.secondclass.core.result.ScoreInfo
-import com.thryan.secondclass.core.result.User
-import com.thryan.secondclass.core.utils.success
-import com.thryan.secondclass.ui.Navigator
-import com.thryan.secondclass.ui.info.Repository
+import com.thryan.secondclass.core.result.UserInfo
+import com.thryan.secondclass.Navigator
+import com.thryan.secondclass.SCRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
 class PageViewModel @Inject constructor(
     private val navigator: Navigator,
+    private val scRepository: SCRepository,
     savedStateHandle: SavedStateHandle
 ) :
     ViewModel() {
@@ -30,7 +31,7 @@ class PageViewModel @Inject constructor(
             loadingMsg = "",
             showingDialog = false,
             dialogContent = "",
-            activities = Repository.activities.value,
+            activities = emptyList(),
             loadMore = true,
             keyword = ""
         )
@@ -38,16 +39,25 @@ class PageViewModel @Inject constructor(
     val pageState: StateFlow<PageState> = _pageState.asStateFlow()
 
 
-    private lateinit var user: User
-    private lateinit var scoreInfo: ScoreInfo
+    private lateinit var userInfo: UserInfo
     private val twfid = savedStateHandle.get<String>("twfid") ?: throw Exception()
     private val account = savedStateHandle.get<String>("account") ?: throw Exception()
-    private var secondClass = SecondClass(twfid)
+    private val password = savedStateHandle.get<String>("password")
     private var currentPageNum = 1
+
+    private var userJob: Job? = null
 
     init {
         Log.i(TAG, "PageViewModel Created")
+        scRepository.init(twfid, account, password)
         send(PageIntent.Init)
+        viewModelScope.launch {
+            scRepository.activities.collect {
+                update {
+                    copy(activities = it)
+                }
+            }
+        }
     }
 
 
@@ -56,28 +66,27 @@ class PageViewModel @Inject constructor(
     private suspend fun onHandle(intent: PageIntent) {
         when (intent) {
             is PageIntent.Init -> {
-                if (Repository.activities.value.isEmpty()) login()
+                login()
             }
 
             is PageIntent.UpdateActivity -> {
-                update(pageState.value.copy(activities = Repository.activities.value))
             }
 
             is PageIntent.OpenActivity -> {
-                Repository.activities.emit(pageState.value.activities)
-                navigator.navigate("info?id=${intent.id}&twfid=${twfid}&token=${secondClass.token}")
+                navigator.navigate("info?id=${intent.id}")
             }
 
             is PageIntent.ShowDialog -> {
                 val content = if (intent.userInfo) {
+                    userJob?.join()
                     buildString {
-                        append(user.name)
+                        append(userInfo.name)
                         append("\n积分:")
-                        append(scoreInfo.score)
+                        append(userInfo.score)
                         append(" 完成活动:")
-                        append(scoreInfo.activity)
+                        append(userInfo.activity)
                         append(" 诚信值:")
-                        append(scoreInfo.integrity_value)
+                        append(userInfo.integrity_value)
                     }
                 } else intent.message
                 update(PageActions.Dialog(content).reduce(pageState.value))
@@ -88,21 +97,17 @@ class PageViewModel @Inject constructor(
             }
 
             PageIntent.LoadMore -> {
-                val res = getActivities(currentPageNum)
-                if (res) currentPageNum += 1
-                else update(pageState.value.copy(loadMore = false))
+                getActivities()
             }
 
             is PageIntent.Search -> {
                 if (intent.keyword != pageState.value.keyword) {
-                    update(
-                        pageState.value.copy(
-                            keyword = intent.keyword,
-                            activities = emptyList()
-                        )
-                    )
+                    //清空列表
+                    update {
+                        copy(keyword = intent.keyword, loadMore = true)
+                    }
                     currentPageNum = 1
-                    getActivities()
+                    getActivities(clear = true)
                 }
             }
         }
@@ -113,54 +118,44 @@ class PageViewModel @Inject constructor(
     }
 
 
-    private suspend fun getActivities(pageNo: Int = 1, pageSize: Int = 5): Boolean =
+    private suspend fun getActivities(pageSize: Int = 5, clear: Boolean = false) {
         try {
-            val activities = secondClass.getActivities(pageNo, pageSize, pageState.value.keyword)
-            if (activities.success()) {
-                if (activities.data.rows.isEmpty()) {
-                    false
-                } else {
-                    update(PageActions.LoadMore(activities.data.rows).reduce(_pageState.value))
-                    true
-                }
-            } else throw Exception(activities.message)
+            val size =
+                scRepository.getActivities(currentPageNum, pageSize, pageState.value.keyword, clear)
+            if (size <= 0) update { copy(loadMore = false) }
+            currentPageNum += 1
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
             update(PageActions.Dialog(e.message!!).reduce(pageState.value))
-            false
         }
+    }
 
 
-    private suspend fun login() {
+    private suspend fun login() = withContext(Dispatchers.IO) {
         try {
             update(PageActions.Loading("登录中").reduce(pageState.value))
-            val res = secondClass.login(account)
-            Log.i(TAG, "login secondclass ${res.message}")
-            if (res.success()) {
-                Repository.secondClass = secondClass
-                update(PageActions.Loading("获取用户信息").reduce(pageState.value))
-                val user = secondClass.getUser()
-                this@PageViewModel.user = user.data
-                val scoreInfo = secondClass.getScoreInfo(this@PageViewModel.user)
-                this@PageViewModel.scoreInfo = scoreInfo.data
-                //获取活动
-                update(PageActions.Loading("获取活动信息").reduce(pageState.value))
-                this@PageViewModel.getActivities()
-                currentPageNum = 3
-                update(PageActions.Loading(loading = false).reduce(pageState.value))
-            } else {
-                update(PageActions.Dialog(res.message).reduce(pageState.value))
-            }
+            val loginResult = scRepository.login()
+            Log.i(TAG, "login secondclass $loginResult")
+            update(PageActions.Loading("获取活动信息").reduce(pageState.value))
+            val activityJob = launch { this@PageViewModel.getActivities() }
+            userJob = launch { this@PageViewModel.userInfo = scRepository.getUserInfo() }
+            activityJob.join()
+            update(PageActions.Loading(loading = false).reduce(pageState.value))
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
-            if (e.message!!.contains("500 Server internal error")) update(
-                PageActions.Dialog(
-                    "使用前请勿在其他端登录，请等待几分钟后重新登录"
-                ).reduce(pageState.value)
+            if (e.message?.contains("500 Server internal error") == true) update(
+                PageActions.Dialog("使用前请勿在其他端登录，请等待几分钟后重新登录")
+                    .reduce(pageState.value)
             )
-            else update(PageActions.Dialog(e.message!!).reduce(pageState.value))
+            else update(PageActions.Dialog(e.message ?: "error").reduce(pageState.value))
         }
 
+    }
+
+    private suspend fun update(block: PageState.() -> PageState) {
+        val newState: PageState
+        pageState.value.apply { newState = block() }
+        _pageState.emit(newState)
     }
 
     companion object {

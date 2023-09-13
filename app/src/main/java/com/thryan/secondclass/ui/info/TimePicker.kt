@@ -6,10 +6,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import com.marosseleng.compose.material3.datetimepickers.time.ui.dialog.TimePickerDialog
-import com.thryan.secondclass.ui.info.InfoIntent
-import com.thryan.secondclass.ui.info.InfoViewModel
 import java.time.LocalTime
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

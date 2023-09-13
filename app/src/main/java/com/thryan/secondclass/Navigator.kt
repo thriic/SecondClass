@@ -1,4 +1,4 @@
-package com.thryan.secondclass.ui
+package com.thryan.secondclass
 
 import androidx.navigation.NavHostController
 import androidx.navigation.NavOptionsBuilder

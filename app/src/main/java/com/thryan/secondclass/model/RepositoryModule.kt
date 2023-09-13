@@ -1,6 +1,6 @@
 package com.thryan.secondclass.model
 
-import com.thryan.secondclass.Navigator
+import com.thryan.secondclass.SCRepository
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -9,9 +9,9 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object NavigatorModule {
+object RepositoryModule {
     @Provides
     @Singleton
-    fun provideNavigator(): Navigator =
-        Navigator()
+    fun provideRepository(): SCRepository =
+        SCRepository()
 }

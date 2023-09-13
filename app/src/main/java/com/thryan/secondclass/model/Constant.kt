@@ -7,5 +7,6 @@ object Constant {
     val KEY_TWFID = stringPreferencesKey("twfid")
     val KEY_ACCOUNT = stringPreferencesKey("account")
     val KEY_PASSWORD = stringPreferencesKey("password")
-    val KEY_LASTTIME = stringPreferencesKey("last_time")
+    val KEY_SC_PASSWORD = stringPreferencesKey("sc_password")
+    val KEY_LAST_TIME = stringPreferencesKey("last_time")
 }

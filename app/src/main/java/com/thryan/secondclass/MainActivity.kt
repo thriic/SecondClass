@@ -1,6 +1,5 @@
-package com.thryan.secondclass.ui
+package com.thryan.secondclass
 
-import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import androidx.activity.ComponentActivity
@@ -27,7 +26,6 @@ import com.thryan.secondclass.ui.info.InfoViewModel
 import com.thryan.secondclass.ui.login.Login
 import com.thryan.secondclass.ui.login.LoginViewModel
 import com.thryan.secondclass.ui.page.Page
-import com.thryan.secondclass.ui.page.PageIntent
 import com.thryan.secondclass.ui.page.PageViewModel
 import com.thryan.secondclass.ui.theme.SecondClassTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -76,15 +74,15 @@ fun AppNavHost(
     ) {
         Log.i("Main", "NavBuilder")
         composable("login") {
-
             val viewModel = hiltViewModel<LoginViewModel>()
             Login(viewModel = viewModel)
         }
         composable(
-            "page?twfid={twfid}&account={account}",
+            "page?twfid={twfid}&account={account}&password={password}",
             arguments = listOf(
                 navArgument("twfid") { type = NavType.StringType },
-                navArgument("account") { type = NavType.StringType }
+                navArgument("account") { type = NavType.StringType },
+                navArgument("password") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             Log.i("Main", "我他妈recompose")
@@ -93,11 +91,9 @@ fun AppNavHost(
             Page(viewModel = pageViewModel)
         }
         composable(
-            "info?id={id}&twfid={twfid}&token={token}",
+            "info?id={id}&twfid={twfid}",
             arguments = listOf(
-                navArgument("id") { type = NavType.StringType },
-                navArgument("twfid") { type = NavType.StringType },
-                navArgument("token") { type = NavType.StringType }
+                navArgument("id") { type = NavType.StringType }
             )
         ) { backStackEntry ->
             Log.i("Main", "我他妈recompose")

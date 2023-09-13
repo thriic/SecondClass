@@ -6,13 +6,12 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.thryan.secondclass.core.SecondClass
 import com.thryan.secondclass.core.result.SCActivity
 import com.thryan.secondclass.core.result.SignInfo
 import com.thryan.secondclass.core.utils.after
 import com.thryan.secondclass.core.utils.before
-import com.thryan.secondclass.core.utils.success
 import com.thryan.secondclass.core.utils.toLocalDateTime
+import com.thryan.secondclass.SCRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -23,17 +22,17 @@ import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
-class InfoViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : ViewModel() {
+class InfoViewModel @Inject constructor(
+    private val scRepository: SCRepository,
+    savedStateHandle: SavedStateHandle
+) : ViewModel() {
 
     val id = savedStateHandle.get<String>("id")!!
-    private val twfid = savedStateHandle.get<String>("twfid")!!
-    private val token = savedStateHandle.get<String>("token")!!
-    private val secondClass = SecondClass(twfid, token)
 
     private val _uiState =
         MutableStateFlow(
             InfoState(
-                Repository.getActivity(id)!!,
+                scRepository.getActivity(id)!!,
                 loading = true,
                 showSignCard = true,
                 showSignInCard = true,
@@ -56,34 +55,37 @@ class InfoViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : Vi
                 //生成链接
                 generateLink()
                 //获取签到信息
-                val res = secondClass.getSignInfo(Repository.getActivity(id)!!)
-                if (!res.success()) throw Exception(res.message)
-                val signInfo = res.data.rows.getOrElse(0) { SignInfo(id, "", "") }
-                update(
-                    _uiState.value.copy(
+                val signInfo = scRepository.getSignInfo(uiState.value.activity)
+                    .getOrElse(0) { SignInfo(id, "", "") }
+                update {
+                    copy(
                         signInfo = signInfo,
                         signOutTime = signInfo.signOutTime.substringBefore(".000").ifEmpty {
                             uiState.value.activity.endTime.before(
-                                10
+                                (5..15).random()
                             )
                         },
                         signInTime = signInfo.signInTime.substringBefore(".000").ifEmpty {
                             uiState.value.activity.startTime.after(
-                                10
+                                (5..15).random()
                             )
                         },
                         loading = false
                     )
-                )
+                }
             } catch (e: Exception) {
                 Log.e(TAG, e.toString())
-                update(uiState.value.copy(loading = false))
+                update { copy(loading = false) }
                 showSnackbar(e.message ?: e.toString())
             }
         }
     }
 
-    private suspend fun update(infoState: InfoState) = _uiState.emit(infoState)
+    private suspend fun update(block: InfoState.() -> InfoState) {
+        val newState: InfoState
+        uiState.value.apply { newState = block() }
+        _uiState.emit(newState)
+    }
 
     fun send(intent: InfoIntent) = viewModelScope.launch { onHandle(intent) }
 
@@ -98,7 +100,7 @@ class InfoViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : Vi
                 if (localDateTime.isBefore(uiState.value.signOutTime.toLocalDateTime())) {
                     val timeString = localDateTime.format(formatter)
                     Log.i(TAG, timeString)
-                    update(uiState.value.copy(signInTime = timeString))
+                    update { copy(signInTime = timeString) }
                 } else {
                     showSnackbar("签到时间不得晚于签退时间")
                 }
@@ -112,28 +114,28 @@ class InfoViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : Vi
                 if (localDateTime.isAfter(uiState.value.signInTime.toLocalDateTime())) {
                     val timeString = localDateTime.format(formatter)
                     Log.i(TAG, timeString)
-                    update(uiState.value.copy(signOutTime = timeString))
+                    update { copy(signOutTime = timeString) }
                 } else {
                     showSnackbar("签退时间不得早于签到时间")
                 }
             }
 
             is InfoIntent.ShowDialog -> {
-                if (infoIntent.signInDialog) update(uiState.value.copy(showSignInTimePicker = true))
-                else update(uiState.value.copy(showSignOutTimePicker = true))
+                if (infoIntent.signInDialog) update { copy(showSignInTimePicker = true) }
+                else update { copy(showSignOutTimePicker = true) }
             }
 
             is InfoIntent.CloseDialog -> {
-                update(
-                    uiState.value.copy(
+                update {
+                    copy(
                         showSignOutTimePicker = false,
                         showSignInTimePicker = false
                     )
-                )
+                }
             }
 
             InfoIntent.Sign -> {
-                sign(uiState.value.activity)
+                sign()
             }
 
             InfoIntent.SignIn -> {
@@ -155,62 +157,55 @@ class InfoViewModel @Inject constructor(savedStateHandle: SavedStateHandle) : Vi
 
     private suspend fun signIn(activity: SCActivity, signInTime: String, signOutTime: String) {
         try {
-            update(uiState.value.copy(loading = true))
-            val res = secondClass.signIn(activity, uiState.value.signInfo, signInTime, signOutTime)
-            if (res.success()) {
-                //签到成功更新signInfo
-                update(
-                    uiState.value.copy(
-                        loading = false,
-                        signInfo = SignInfo(uiState.value.signInfo.id, signInTime, signOutTime)
-                    )
+            update { copy(loading = true) }
+            val res = scRepository.signIn(activity, uiState.value.signInfo, signInTime, signOutTime)
+            //签到成功更新signInfo
+            update {
+                copy(
+                    loading = false,
+                    signInfo = SignInfo(uiState.value.signInfo.id, signInTime, signOutTime)
                 )
-                showSnackbar("签到成功")
-            } else {
-                throw Exception(res.message)
             }
+            showSnackbar("签到成功")
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
-            update(uiState.value.copy(loading = false))
+            update { copy(loading = false) }
             showSnackbar(e.message ?: e.toString())
         }
     }
 
-    private suspend fun sign(activity: SCActivity) {
+    private suspend fun sign() {
         try {
-            update(uiState.value.copy(loading = true))
-            val res = secondClass.sign(activity)
-            if (!res.success()) throw Exception(res.message)
-            if (res.data.code == "1") {
-                update(
-                    uiState.value.copy(
-                        loading = false,
-                        activity = uiState.value.activity.copy(isSign = "1"),
-                        signInfo = secondClass.getSignInfo(activity).data.rows.getOrElse(0) { uiState.value.signInfo }
-                    )
+            update { copy(loading = true) }
+            val res = scRepository.sign(uiState.value.activity)
+            val signInfo = scRepository.getSignInfo(uiState.value.activity)
+                .getOrElse(0) { uiState.value.signInfo }
+            update {
+                copy(
+                    loading = false,
+                    activity = uiState.value.activity.copy(isSign = "1"),
+                    signInfo = signInfo
                 )
-                Repository.setActivity(activity.id, "1")
-                showSnackbar(res.data.msg)
-            } else {
-                update(uiState.value.copy(loading = false))
-                showSnackbar(res.data.msg)
             }
+            scRepository.setActivity(id, "1")
+            showSnackbar(res.data.msg)
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
-            update(uiState.value.copy(loading = false))
+            update { copy(loading = false) }
             showSnackbar(e.message ?: e.toString())
         }
 
     }
 
     private suspend fun generateLink() {
-        update(
-            uiState.value.copy(
+        update {
+            copy(
                 link = "/#/pages/activity/studentQdqt?id=" + uiState.value.activity.id + "&timestamp=" + System.currentTimeMillis()
                     .plus(500000L)
             )
-        )
+        }
     }
+
 
     companion object {
         private const val TAG = "InfoViewModel"

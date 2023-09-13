@@ -3,13 +3,10 @@ package com.thryan.secondclass.ui.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.thryan.secondclass.ui.AppDataStore
+import com.thryan.secondclass.AppDataStore
 import com.thryan.secondclass.core.WebVpn
-import com.thryan.secondclass.core.result.HttpResult
 import com.thryan.secondclass.core.result.VpnInfo
-import com.thryan.secondclass.ui.Navigator
-import com.thryan.secondclass.ui.info.Repository
+import com.thryan.secondclass.Navigator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -35,18 +32,18 @@ class LoginViewModel @Inject constructor(
     private var login = false
 
     init {
-        Repository.activities.value = emptyList()
         send(LoginIntent.Init)
         job = viewModelScope.launch(Dispatchers.IO) {
             //若超过10分钟则不检查twfid可用性
-            val lastTime = appDataStore.getLastTime("").also(::println)
-            if (lastTime.isNotEmpty() && System.currentTimeMillis() - lastTime.toLong() < 10 * 60 * 1000) {
-                Log.i(TAG, "距离上次登录时间小于10分钟，检查twfid可用性")
+            val lastTime = appDataStore.getLastTime("")
+            if (lastTime.isNotEmpty() && System.currentTimeMillis() - lastTime.toLong() < 60 * 60 * 1000) {
+                Log.i(TAG, "距离上次登录时间小于1小时，检查twfid可用性")
                 val twfid = appDataStore.getTwfid("")
                 if (twfid.isNotEmpty()) {
                     Log.i(TAG, "检查twfid")
                     login = WebVpn.checkLogin(twfid)
-                    Log.i(TAG, "twfid有效")
+                    if (!login) checkJob = launch { auth = WebVpn.auth().data }
+                    else Log.i(TAG, "twfid有效")
                     return@launch
                 }
             }
@@ -63,23 +60,49 @@ class LoginViewModel @Inject constructor(
     private suspend fun onHandle(intent: LoginIntent) {
         when (intent) {
             is LoginIntent.Login -> {
-                update(uiState.value.copy(pending = true))
-                Log.i(TAG, "login ${uiState.value.account}:${uiState.value.password}")
-                val twfid = appDataStore.getTwfid("")
-                val (account, password, scAccount) = uiState.value
-                job.join()
-                if (login) {
-                    appDataStore.putLastTime(System.currentTimeMillis().toString().also(::println))
-                    withContext(Dispatchers.Main) {
-                        navigator.navigate("page?twfid=${twfid}&account=${scAccount.ifEmpty { account }}") {
-                            popUpTo("login") { inclusive = true }
-                            launchSingleTop = true
-                        }
+                try {
+                    if (uiState.value.account.isEmpty() || uiState.value.password.isEmpty()) {
+                        update(
+                            uiState.value.copy(
+                                showDialog = true,
+                                message = "请输入账号密码"
+                            )
+                        )
+                        return
                     }
-                } else {
-                    login(account, password, scAccount)
+                    update(uiState.value.copy(pending = true))
+                    Log.i(TAG, "login ${uiState.value.account}:${uiState.value.password}")
+                    val twfid = appDataStore.getTwfid("")
+                    val (account, password, scPassword) = uiState.value
+                    job.join()
+                    Log.i(TAG, "complete login  $login")
+                    if (login) {
+                        appDataStore.putLastTime(
+                            System.currentTimeMillis().toString()
+                        )
+                        withContext(Dispatchers.Main) {
+                            navigator.navigate("page?twfid=${twfid}&account=${account}&password=$scPassword") {
+                                popUpTo("login") { inclusive = true }
+                                launchSingleTop = true
+                            }
+                        }
+                    } else {
+                        Log.i(TAG, "尝试登录")
+                        login(account, password, scPassword = scPassword)
+                        Log.i(TAG, "登录结束")
+                    }
+                } catch (e: Exception) {
+                    Log.i(TAG, "error $e")
+                    update(
+                        uiState.value.copy(
+                            showDialog = true,
+                            message = if (e.message?.contains("time") == true) "连接超时" else e.message
+                                ?: "未知错误，请等待一段时间后尝试"
+                        )
+                    )
+                } finally {
+                    update(uiState.value.copy(pending = false))
                 }
-                update(uiState.value.copy(pending = false))
             }
 
             is LoginIntent.GetPreference -> {
@@ -95,7 +118,7 @@ class LoginViewModel @Inject constructor(
             }
 
             is LoginIntent.UpdateSCAccount -> {
-                update(uiState.value.copy(scAccount = intent.scAccount))
+                update(uiState.value.copy(scPassword = intent.scAccount))
             }
 
             is LoginIntent.CloseDialog -> {
@@ -110,7 +133,8 @@ class LoginViewModel @Inject constructor(
                 update(
                     uiState.value.copy(
                         account = appDataStore.getAccount(""),
-                        password = appDataStore.getPassword("")
+                        password = appDataStore.getPassword(""),
+                        scPassword = appDataStore.getScPassword("")
                     )
                 )
 
@@ -119,7 +143,12 @@ class LoginViewModel @Inject constructor(
     }
 
 
-    private suspend fun login(account: String, password: String, scAccount: String = "") =
+    private suspend fun login(
+        account: String,
+        password: String,
+        scAccount: String = "",
+        scPassword: String = "123456"
+    ) =
         withContext(Dispatchers.IO) {
             checkJob?.join()
             val response = WebVpn.login(auth!!, account, password)
@@ -130,11 +159,12 @@ class LoginViewModel @Inject constructor(
                     putTwfid(response.data)
                     putAccount(account)
                     putPassword(password)
+                    if(scPassword!="123456") putScPassword(scPassword)
                     putLastTime(System.currentTimeMillis().toString())
                 }
                 Log.i(TAG, "appDataStore complete")
                 withContext(Dispatchers.Main) {
-                    navigator.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}") {
+                    navigator.navigate("page?twfid=${response.data}&account=${scAccount.ifEmpty { account }}&password=$scPassword") {
                         popUpTo("login") { inclusive = true }
                         launchSingleTop = true
                     }

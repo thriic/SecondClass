@@ -13,7 +13,8 @@ object RSAUtils {
         val cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding")
         cipher.init(Cipher.ENCRYPT_MODE, publicKey)
         val ret = BigInteger(cipher.doFinal(plaintext.toByteArray())).toString(16)
-        return ret.replace("-","")
+        if(ret.contains("-")) return encrypt(plaintext, rsaEncryptKey, rsaEncryptExp)
+        return ret
     }
 
 }

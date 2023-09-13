@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -125,21 +124,22 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
         visualTransformation = if (uiState.showPassword) VisualTransformation.None else PasswordVisualTransformation()
     )
 
-//    OutlinedTextField(
-//        value = uiState.scAccount,
-//        singleLine = true,
-//        modifier = Modifier
-//            .fillMaxWidth()
-//            .padding(top = 8.dp),
-//        onValueChange = { viewModel.send(LoginIntent.UpdateSCAccount(it)) },
-//        label = { Text("二课账号(可不填)") },
-//        keyboardOptions = KeyboardOptions.Default.copy(
-//            imeAction = ImeAction.Done
-//        ),
-//        keyboardActions = KeyboardActions(
-//            onDone = { }
-//        )
-//    )
+    OutlinedTextField(
+        value = uiState.scPassword,
+        singleLine = true,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 8.dp),
+        onValueChange = { viewModel.send(LoginIntent.UpdateSCAccount(it)) },
+        label = { Text("二课密码") },
+        placeholder = { Text("默认为123456,可不填") },
+        keyboardOptions = KeyboardOptions.Default.copy(
+            imeAction = ImeAction.Done
+        ),
+        keyboardActions = KeyboardActions(
+            onDone = { }
+        )
+    )
     Text(
         "登录较慢为正常情况，若无法登录，请检查本机是否能正常访问EasyConnect",
         style = MaterialTheme.typography.labelSmall

@@ -1,11 +1,12 @@
-package com.thryan.secondclass.ui
+package com.thryan.secondclass
 
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.thryan.secondclass.model.Constant.KEY_ACCOUNT
-import com.thryan.secondclass.model.Constant.KEY_LASTTIME
+import com.thryan.secondclass.model.Constant.KEY_LAST_TIME
 import com.thryan.secondclass.model.Constant.KEY_PASSWORD
+import com.thryan.secondclass.model.Constant.KEY_SC_PASSWORD
 import com.thryan.secondclass.model.Constant.KEY_TWFID
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -13,9 +14,6 @@ import dagger.hilt.android.components.ActivityComponent
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
-import kotlinx.serialization.json.Json
 import javax.inject.Inject
 
 @Module
@@ -30,12 +28,16 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
         putString(KEY_PASSWORD, value)
     }
 
+    suspend fun putScPassword(value: String){
+        putString(KEY_SC_PASSWORD,value)
+    }
+
     suspend fun putTwfid(value: String) {
         putString(KEY_TWFID, value)
     }
 
     suspend fun putLastTime(value: String){
-        putString(KEY_LASTTIME,value)
+        putString(KEY_LAST_TIME,value)
     }
 
 
@@ -49,13 +51,18 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
         return@runBlocking string ?: default
     }
 
+    fun getScPassword(default: String): String = runBlocking {
+        val string = getString(KEY_SC_PASSWORD)
+        return@runBlocking string ?: default
+    }
+
     fun getTwfid(default: String): String = runBlocking {
         val string = getString(KEY_TWFID)
         return@runBlocking string ?: default
     }
 
     fun getLastTime(default: String): String = runBlocking {
-        val string = getString(KEY_LASTTIME)
+        val string = getString(KEY_LAST_TIME)
         return@runBlocking string ?: default
     }
 
