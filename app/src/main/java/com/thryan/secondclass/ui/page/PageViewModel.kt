@@ -43,7 +43,7 @@ class PageViewModel @Inject constructor(
     private val twfid = savedStateHandle.get<String>("twfid") ?: throw Exception()
     private val account = savedStateHandle.get<String>("account") ?: throw Exception()
     private val password = savedStateHandle.get<String>("password")
-    private var currentPageNum = 1
+    private var currentPageNum = 0
 
     private var userJob: Job? = null
 
@@ -106,7 +106,7 @@ class PageViewModel @Inject constructor(
                     update {
                         copy(keyword = intent.keyword, loadMore = true)
                     }
-                    currentPageNum = 1
+                    currentPageNum = 0
                     getActivities(clear = true)
                 }
             }
@@ -120,10 +120,10 @@ class PageViewModel @Inject constructor(
 
     private suspend fun getActivities(pageSize: Int = 5, clear: Boolean = false) {
         try {
+            currentPageNum += 1
             val size =
                 scRepository.getActivities(currentPageNum, pageSize, pageState.value.keyword, clear)
             if (size <= 0) update { copy(loadMore = false) }
-            currentPageNum += 1
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
             update(PageActions.Dialog(e.message!!).reduce(pageState.value))
