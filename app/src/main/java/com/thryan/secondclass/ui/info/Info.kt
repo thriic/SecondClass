@@ -50,8 +50,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.thryan.secondclass.R
-import com.thryan.secondclass.core.utils.signIn
-import com.thryan.secondclass.core.utils.textFromStatus
+import com.thryan.secondclass.core.result.signIn
 import com.thryan.secondclass.core.utils.toLocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -85,12 +84,20 @@ fun Info(navController: NavController, viewModel: InfoViewModel) {
         }
     )
     if (uiState.showSignOutTimePicker) {
-        TimePicker(title = "选择时间", viewModel = viewModel, initialTime = uiState.signOutTime.toLocalDateTime().toLocalTime() ) {
-                viewModel.send(InfoIntent.UpdateSignOutTime(it))
-                viewModel.send(InfoIntent.UpdateSignInTime(it))
+        TimePicker(
+            title = "选择时间",
+            viewModel = viewModel,
+            initialTime = uiState.signOutTime.toLocalDateTime().toLocalTime()
+        ) {
+            viewModel.send(InfoIntent.UpdateSignOutTime(it))
+            viewModel.send(InfoIntent.UpdateSignInTime(it))
         }
-    }else if(uiState.showSignInTimePicker){
-        TimePicker(title = "选择时间", viewModel = viewModel, initialTime = uiState.signInTime.toLocalDateTime().toLocalTime() ) {
+    } else if (uiState.showSignInTimePicker) {
+        TimePicker(
+            title = "选择时间",
+            viewModel = viewModel,
+            initialTime = uiState.signInTime.toLocalDateTime().toLocalTime()
+        ) {
             viewModel.send(InfoIntent.UpdateSignInTime(it))
         }
     } else {
@@ -205,7 +212,7 @@ fun MainCard(uiState: InfoState) {
                 onClick = {},
                 enabled = false,
                 label = {
-                    Text(textFromStatus(uiState.activity.activityStatus))
+                    Text(uiState.activity.status)
                 },
                 colors = SuggestionChipDefaults.suggestionChipColors(disabledLabelColor = MaterialTheme.colorScheme.primary)
             )
@@ -217,6 +224,10 @@ fun MainCard(uiState: InfoState) {
         )
         Text(
             "地点: " + uiState.activity.activityAddress,
+            style = MaterialTheme.typography.labelMedium
+        )
+        Text(
+            "类型: " + uiState.activity.type,
             style = MaterialTheme.typography.labelMedium
         )
         Text(

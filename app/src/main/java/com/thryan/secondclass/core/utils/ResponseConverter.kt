@@ -7,7 +7,7 @@ import com.thryan.secondclass.core.result.HttpResult
 
 //这依托shit是谁写的
 //是我啊，没事了
-class Factory(val type: ResponseType) {
+class ResponseConverter(val type: ResponseType) {
     inline fun <reified T> convert(value: String): HttpResult<T> =
         when (type) {
             ResponseType.XML -> {
@@ -44,7 +44,6 @@ class Factory(val type: ResponseType) {
 //                }
             }
 
-            else -> throw Exception("未知的类型")
         }
 
 }

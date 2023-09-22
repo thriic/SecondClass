@@ -44,6 +44,7 @@ class PageViewModel @Inject constructor(
     private val account = savedStateHandle.get<String>("account") ?: throw Exception()
     private val password = savedStateHandle.get<String>("password")
     private var currentPageNum = 0
+    private var isLoading = false
 
     private var userJob: Job? = null
 
@@ -97,7 +98,10 @@ class PageViewModel @Inject constructor(
             }
 
             PageIntent.LoadMore -> {
-                getActivities()
+                if(!isLoading){
+                    isLoading = true
+                    getActivities()
+                }
             }
 
             is PageIntent.Search -> {
@@ -123,6 +127,7 @@ class PageViewModel @Inject constructor(
             currentPageNum += 1
             val size =
                 scRepository.getActivities(currentPageNum, pageSize, pageState.value.keyword, clear)
+            isLoading = false
             if (size <= 0) update { copy(loadMore = false) }
         } catch (e: Exception) {
             Log.e(TAG, e.toString())

@@ -53,7 +53,6 @@ import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import com.thryan.secondclass.R
 import com.thryan.secondclass.core.result.SCActivity
-import com.thryan.secondclass.core.utils.textFromStatus
 
 @Composable
 fun Page(viewModel: PageViewModel) {
@@ -212,7 +211,7 @@ fun ActivityList(
         }
         itemsIndexed(items = pageState.activities) { index, item ->
             //判定是否符合搜索关键词
-            val status = textFromStatus(item.activityStatus)
+            val status = item.status
             ActivityRow(activity = item, status = status) {
                 if (item.id.contains("***")) {
                     viewModel.send(PageIntent.ShowDialog(incompleteId))
@@ -265,6 +264,10 @@ fun ActivityRow(
             )
             Text(
                 activity.startTime.slice(5..15) + " 至 " + activity.endTime.slice(5..15),
+                style = MaterialTheme.typography.labelMedium
+            )
+            Text(
+                activity.type,
                 style = MaterialTheme.typography.labelMedium
             )
             Row(

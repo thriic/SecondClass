@@ -8,7 +8,6 @@ import com.thryan.secondclass.core.result.ScoreInfo
 import com.thryan.secondclass.core.result.SignInfo
 import com.thryan.secondclass.core.result.SignResult
 import com.thryan.secondclass.core.result.User
-import com.thryan.secondclass.core.utils.Factory
 import com.thryan.secondclass.core.utils.Requests
 import com.thryan.secondclass.core.utils.ResponseType
 import com.thryan.secondclass.core.utils.after
@@ -68,7 +67,8 @@ class SecondClass(private val twfid: String, var token: String = "") {
     ): HttpResult<PageInfo> =
         requests
             .get<PageInfo> {
-                path = "activityInfo/page?activityName=$activityName&pageSize=$pageSize&pageNo=$pageNo&sf_request_type=ajax"
+                path =
+                    "activityInfo/page?activityName=$activityName&pageSize=$pageSize&pageNo=$pageNo&sf_request_type=ajax"
                 headers {
                     "sdp-app-session" to twfid
                     "Authorization" to "Bearer $token"

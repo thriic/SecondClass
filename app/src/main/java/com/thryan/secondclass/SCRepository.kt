@@ -8,7 +8,7 @@ import com.thryan.secondclass.core.result.SignInfo
 import com.thryan.secondclass.core.result.SignResult
 import com.thryan.secondclass.core.result.UserInfo
 import com.thryan.secondclass.core.result.plus
-import com.thryan.secondclass.core.utils.success
+import com.thryan.secondclass.core.result.success
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class SCRepository {

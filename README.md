@@ -16,8 +16,8 @@ cuit第二课堂安卓客户端
 Redmi K50 Android13 校外网
 
 ## 使用截图
-|![image](ScreenShots/login.jpg)|![image](ScreenShots/page.jpg)|![image](ScreenShots/info.jpg)|
-|-----------------------------------|-----------------------------------|-----------------------------------|
+| ![image](ScreenShots/login.jpg) | ![image](ScreenShots/page.jpg)  | ![image](ScreenShots/info.jpg)  |
+|---------------------------------|---------------------------------|---------------------------------|
 
 
 

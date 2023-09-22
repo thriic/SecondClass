@@ -12,13 +12,14 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import okhttp3.Response
 import org.json.JSONObject
 import java.io.IOException
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 
 class Requests(val url: String, responseType: ResponseType) {
 
-    val factory = Factory(responseType)
+    val responseConverter = ResponseConverter(responseType)
 
     suspend inline fun <reified T> get(block: Request.() -> Unit): HttpResult<T> {
         val request = Request().apply {
@@ -26,9 +27,13 @@ class Requests(val url: String, responseType: ResponseType) {
         }
         request.builder.url((url + request.api).also(::println))
         request.builder.get()
-        val client = OkHttpClient()
+        val client = OkHttpClient().newBuilder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
         val response: Response = client.newCall(request.builder.build()).awaitResponse()
-        return factory.convert(response.awaitString().also(::println))
+        return responseConverter.convert(response.awaitString().also(::println))
     }
 
     @JvmName("getString")
@@ -46,14 +51,18 @@ class Requests(val url: String, responseType: ResponseType) {
             throw Exception("无参数")
         }
         request.builder.post(request.requestBody!!)
-        val client = OkHttpClient()
+        val client = OkHttpClient().newBuilder()
+            .connectTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .readTimeout(30, TimeUnit.SECONDS)
+            .build()
         val response = client.newCall(request.builder.build()).awaitResponse()
-        return factory.convert(response.awaitString().also(::println))
+        return responseConverter.convert(response.awaitString().also(::println))
     }
 
     @JvmName("postString")
     suspend fun post(block: Request.() -> Unit): HttpResult<String> {
-       return this.post<String>(block)
+        return this.post<String>(block)
     }
 
     inner class Request {
