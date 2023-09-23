@@ -1,5 +1,7 @@
 package com.thryan.secondclass.ui.page
 
+import androidx.compose.animation.core.animateIntAsState
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -46,6 +49,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
@@ -53,6 +57,7 @@ import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import com.thryan.secondclass.R
 import com.thryan.secondclass.core.result.SCActivity
+import com.thryan.secondclass.ui.theme.SecondClassTheme
 
 @Composable
 fun Page(viewModel: PageViewModel) {
@@ -77,10 +82,12 @@ fun PageBox(viewModel: PageViewModel) {
             .semantics { isTraversalGroup = true }
     ) {
         var expanded by rememberSaveable { mutableStateOf(false) }
+        val padding: Int by animateIntAsState(if (active) 0 else 16)
         SearchBar(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .semantics { traversalIndex = -1f },
+                .semantics { traversalIndex = -1f }
+                .padding(horizontal = padding.dp),
             query = text,
             onQueryChange = { text = it },
             onSearch = {

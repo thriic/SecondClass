@@ -13,4 +13,4 @@ dependencyResolutionManagement {
     }
 }
 rootProject.name = "SecondClass"
-include ':app'
+include(":app")

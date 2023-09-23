@@ -43,6 +43,7 @@ class MainActivity : ComponentActivity() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
             SecondClassTheme {
+
                 TransparentSystemBars()
                 Surface(
                     modifier = Modifier.fillMaxSize(),

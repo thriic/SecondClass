@@ -34,22 +34,32 @@ class LoginViewModel @Inject constructor(
     init {
         send(LoginIntent.Init)
         job = viewModelScope.launch(Dispatchers.IO) {
-            //若超过10分钟则不检查twfid可用性
-            val lastTime = appDataStore.getLastTime("")
-            if (lastTime.isNotEmpty() && System.currentTimeMillis() - lastTime.toLong() < 60 * 60 * 1000) {
-                Log.i(TAG, "距离上次登录时间小于1小时，检查twfid可用性")
-                val twfid = appDataStore.getTwfid("")
-                if (twfid.isNotEmpty()) {
-                    Log.i(TAG, "检查twfid")
-                    login = WebVpn.checkLogin(twfid)
-                    if (!login) checkJob = launch { auth = WebVpn.auth().data }
-                    else Log.i(TAG, "twfid有效")
-                    return@launch
+            try {
+                //若超过10分钟则不检查twfid可用性
+                val lastTime = appDataStore.getLastTime("")
+                if (lastTime.isNotEmpty() && System.currentTimeMillis() - lastTime.toLong() < 60 * 60 * 1000) {
+                    Log.i(TAG, "距离上次登录时间小于1小时，检查twfid可用性")
+                    val twfid = appDataStore.getTwfid("")
+                    if (twfid.isNotEmpty()) {
+                        Log.i(TAG, "检查twfid")
+                        login = WebVpn.checkLogin(twfid)
+                        if (!login) checkJob = launch { auth = WebVpn.auth().data }
+                        else Log.i(TAG, "twfid有效")
+                        return@launch
+                    }
                 }
+                Log.i(TAG, "twfid无效，预加载auth")
+                auth = WebVpn.auth().data
+                Log.i(TAG, "auth加载完毕")
+            } catch (e: Exception) {
+                update(
+                    uiState.value.copy(
+                        showDialog = true,
+                        message = if (e.message?.contains("time") == true) "连接超时" else e.message
+                            ?: "未知错误，请等待一段时间后尝试"
+                    )
+                )
             }
-            Log.i(TAG, "twfid无效，预加载auth")
-            auth = WebVpn.auth().data
-            Log.i(TAG, "auth加载完毕")
         }
     }
 
@@ -158,7 +168,7 @@ class LoginViewModel @Inject constructor(
                     putTwfid(response.data)
                     putAccount(account)
                     putPassword(password)
-                    if(scPassword!="123456") putScPassword(scPassword)
+                    if (scPassword != "123456") putScPassword(scPassword)
                     putLastTime(System.currentTimeMillis().toString())
                 }
                 Log.i(TAG, "appDataStore complete")
