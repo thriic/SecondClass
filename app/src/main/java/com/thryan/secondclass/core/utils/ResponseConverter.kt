@@ -4,6 +4,7 @@ import com.thryan.secondclass.core.result.VpnInfo
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import com.thryan.secondclass.core.result.HttpResult
+import com.thryan.secondclass.core.result.SignInResult
 
 //这依托shit是谁写的
 //是我啊，没事了
@@ -37,11 +38,14 @@ class ResponseConverter(val type: ResponseType) {
                     coerceInputValues = true
                     ignoreUnknownKeys = true
                 }
-                //try {
-                json.decodeFromString(value.trimIndent())
-//                } catch (e: Exception) {
-//                    throw Exception("返回参数错误")
-//                }
+                try {
+                    json.decodeFromString(value.trimIndent())
+                } catch (e: Exception) {
+                    if (e.message?.contains("Field 'data' is required for type with serial name 'com.thryan.secondclass.core.result.HttpResult'") == true) {
+                        val signIn = json.decodeFromString<SignInResult>(value.trimIndent())
+                        HttpResult(signIn.message,"" as T)
+                    } else throw e
+                }
             }
 
         }

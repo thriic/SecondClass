@@ -7,8 +7,8 @@ import com.thryan.secondclass.core.result.SCActivity
 import com.thryan.secondclass.core.result.SignInfo
 import com.thryan.secondclass.core.result.SignResult
 import com.thryan.secondclass.core.result.UserInfo
+import com.thryan.secondclass.core.result.isSuccess
 import com.thryan.secondclass.core.result.plus
-import com.thryan.secondclass.core.result.success
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class SCRepository {
@@ -42,7 +42,7 @@ class SCRepository {
     suspend fun login(): Boolean {
         Log.i("SCRepository", "$secondClass $account $password")
         val msg = secondClass!!.login(account!!, password!!)
-        if (msg.success()) return true
+        if (msg.isSuccess()) return true
         else throw Exception(msg.message)
     }
 
@@ -60,7 +60,7 @@ class SCRepository {
         clear: Boolean = false
     ): Int {
         val res = secondClass!!.getActivities(pageNo, pageSize, keyword)
-        if (res.success()) {
+        if (res.isSuccess()) {
             activities.emit(if (clear) res.data.rows else activities.value + res.data.rows)
             return res.data.rows.size
         } else throw Exception(res.message)
@@ -74,7 +74,7 @@ class SCRepository {
 
     suspend fun sign(activity: SCActivity): HttpResult<SignResult> {
         val res = secondClass!!.sign(activity)
-        if (res.success() && res.data.code == "1") {
+        if (res.isSuccess() && res.data.code == "1") {
             return res
         } else throw Exception(res.data.msg)
     }
@@ -86,7 +86,7 @@ class SCRepository {
         signOutTime: String
     ): String {
         val res = secondClass!!.signIn(activity, signInfo, signInTime, signOutTime)
-        if (res.success()) {
+        if (res.isSuccess()) {
             return res.data
         } else throw Exception(res.message)
     }
