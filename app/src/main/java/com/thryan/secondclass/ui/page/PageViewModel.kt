@@ -39,14 +39,11 @@ class PageViewModel @Inject constructor(
     val pageState: StateFlow<PageState> = _pageState.asStateFlow()
 
 
-    private lateinit var userInfo: UserInfo
     private val twfid = savedStateHandle.get<String>("twfid") ?: throw Exception()
     private val account = savedStateHandle.get<String>("account") ?: throw Exception()
     private val password = savedStateHandle.get<String>("password")
     private var currentPageNum = 0
     private var isLoading = false
-
-    private var userJob: Job? = null
 
     init {
         Log.i(TAG, "PageViewModel Created")
@@ -78,19 +75,7 @@ class PageViewModel @Inject constructor(
             }
 
             is PageIntent.ShowDialog -> {
-                val content = if (intent.userInfo) {
-                    userJob?.join()
-                    buildString {
-                        append(userInfo.name)
-                        append("\n积分:")
-                        append(userInfo.score)
-                        append(" 完成活动:")
-                        append(userInfo.activity)
-                        append(" 诚信值:")
-                        append(userInfo.integrity_value)
-                    }
-                } else intent.message
-                update(PageActions.Dialog(content).reduce(pageState.value))
+                update(PageActions.Dialog(intent.message).reduce(pageState.value))
             }
 
             is PageIntent.CloseDialog -> {
@@ -113,6 +98,10 @@ class PageViewModel @Inject constructor(
                     currentPageNum = 0
                     getActivities(clear = true)
                 }
+            }
+
+            PageIntent.openUser -> {
+                navigator.navigate("user")
             }
         }
     }
@@ -143,7 +132,6 @@ class PageViewModel @Inject constructor(
             Log.i(TAG, "login secondclass $loginResult")
             update(PageActions.Loading("获取活动信息").reduce(pageState.value))
             val activityJob = launch { this@PageViewModel.getActivities() }
-            userJob = launch { this@PageViewModel.userInfo = scRepository.getUserInfo() }
             activityJob.join()
             update(PageActions.Loading(loading = false).reduce(pageState.value))
         } catch (e: Exception) {

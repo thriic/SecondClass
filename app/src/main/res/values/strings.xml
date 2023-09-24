@@ -4,5 +4,5 @@
     <string name="vpn_link">http://ekty-cuit-edu-cn.webvpn.cuit.edu.cn:8118</string>
     <string name="incomplete_id">此活动id不全，无法报名签到</string>
     <string name="login_tips">学校服务器或上网高峰可能导致登录较慢，请耐心等待</string>
-    <string name="about">此软件提供在任意时间对已报名活动进行签到的功能\n大部分未知原因无法正常使用的bug，可以尝试退出app，十几分钟后再次尝试\n由于二课审核机制，请鉴别该活动是否与自己相关再进行报名签到</string>
+    <string name="about">大部分未知原因无法正常使用的bug，可以尝试退出app，十几分钟后再次尝试\n由于二课审核机制，请鉴别该活动是否与自己相关再进行报名签到</string>
 </resources>

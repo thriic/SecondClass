@@ -1,9 +1,11 @@
 package com.thryan.secondclass.core
 
+import com.thryan.secondclass.core.result.ActivityClass
 import com.thryan.secondclass.core.result.HttpResult
 import com.thryan.secondclass.core.result.PageInfo
 import com.thryan.secondclass.core.result.Rows
 import com.thryan.secondclass.core.result.SCActivity
+import com.thryan.secondclass.core.result.ScoreDetails
 import com.thryan.secondclass.core.result.ScoreInfo
 import com.thryan.secondclass.core.result.SignInfo
 import com.thryan.secondclass.core.result.SignResult
@@ -157,6 +159,31 @@ class SecondClass(private val twfid: String, var token: String = "") {
                 "id" to signInfo.id
                 "signInTime" to signInTime
                 "signOutTime" to signOutTime
+            }
+        }
+
+    /**
+     * 获取活动类型
+     */
+    suspend fun getActivityClass(): HttpResult<Rows<ActivityClass>> = requests
+        .get<Rows<ActivityClass>> {
+            path = "bsActivityClassify/page?sf_request_type=ajax"
+            headers {
+                "sdp-app-session" to twfid
+                "Authorization" to "Bearer $token"
+            }
+        }
+
+    suspend fun getScoreDetail(user: User):HttpResult<ScoreDetails> = requests
+        .get<ScoreDetails> {
+            path = "studentScore/appData"
+            headers {
+                "sdp-app-session" to twfid
+                "Authorization" to "Bearer $token"
+            }
+            params {
+                "userId" to user.id
+                "sf_request_type" to "ajax"
             }
         }
 

@@ -4,6 +4,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import com.thryan.secondclass.model.Constant.KEY_ACCOUNT
+import com.thryan.secondclass.model.Constant.KEY_DYNAMIC
 import com.thryan.secondclass.model.Constant.KEY_LAST_TIME
 import com.thryan.secondclass.model.Constant.KEY_PASSWORD
 import com.thryan.secondclass.model.Constant.KEY_SC_PASSWORD
@@ -28,16 +29,22 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
         putString(KEY_PASSWORD, value)
     }
 
-    suspend fun putScPassword(value: String){
-        putString(KEY_SC_PASSWORD,value)
+    suspend fun putScPassword(value: String) {
+        putString(KEY_SC_PASSWORD, value)
     }
 
     suspend fun putTwfid(value: String) {
         putString(KEY_TWFID, value)
     }
 
-    suspend fun putLastTime(value: String){
-        putString(KEY_LAST_TIME,value)
+    suspend fun putLastTime(value: String) {
+        putString(KEY_LAST_TIME, value)
+    }
+
+    suspend fun putDynamic(value: Boolean) {
+        dataStore.edit {
+            it[KEY_DYNAMIC] = value
+        }
     }
 
 
@@ -64,6 +71,13 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
     fun getLastTime(default: String): String = runBlocking {
         val string = getString(KEY_LAST_TIME)
         return@runBlocking string ?: default
+    }
+
+    fun getDynamic(default: Boolean): Boolean = runBlocking {
+        val bool = dataStore.data.map {
+            it[KEY_DYNAMIC]
+        }.first()
+        return@runBlocking bool ?: default
     }
 
     private suspend fun putString(key: Preferences.Key<String>, value: String) = dataStore.edit {

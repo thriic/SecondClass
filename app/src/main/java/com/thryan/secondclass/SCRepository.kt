@@ -2,13 +2,18 @@ package com.thryan.secondclass
 
 import android.util.Log
 import com.thryan.secondclass.core.SecondClass
+import com.thryan.secondclass.core.result.ActivityClass
 import com.thryan.secondclass.core.result.HttpResult
+import com.thryan.secondclass.core.result.Rows
 import com.thryan.secondclass.core.result.SCActivity
+import com.thryan.secondclass.core.result.ScoreDetail
+import com.thryan.secondclass.core.result.ScoreDetails
+import com.thryan.secondclass.core.result.ScoreInfo
 import com.thryan.secondclass.core.result.SignInfo
 import com.thryan.secondclass.core.result.SignResult
-import com.thryan.secondclass.core.result.UserInfo
+import com.thryan.secondclass.core.result.User
 import com.thryan.secondclass.core.result.isSuccess
-import com.thryan.secondclass.core.result.plus
+import com.thryan.secondclass.ui.user.RadarScore
 import kotlinx.coroutines.flow.MutableStateFlow
 
 class SCRepository {
@@ -17,6 +22,11 @@ class SCRepository {
     private var secondClass: SecondClass? = null
     private var account: String? = null
     private var password: String? = null
+
+    private var user: User? = null
+
+    var radarScores: List<RadarScore>? = null
+    var scoreInfo: ScoreInfo? = null
 
 
     fun getActivity(id: String): SCActivity? {
@@ -46,12 +56,6 @@ class SCRepository {
         else throw Exception(msg.message)
     }
 
-
-    suspend fun getUserInfo(): UserInfo {
-        val user = secondClass!!.getUser().data
-        val scoreInfo = secondClass!!.getScoreInfo(user).data
-        return user + scoreInfo
-    }
 
     suspend fun getActivities(
         pageNo: Int = 1,
@@ -86,6 +90,40 @@ class SCRepository {
         signOutTime: String
     ): String {
         val res = secondClass!!.signIn(activity, signInfo, signInTime, signOutTime)
+        if (res.isSuccess()) {
+            return res.data
+        } else throw Exception(res.message)
+    }
+
+    suspend fun getScoreInfo(): ScoreInfo {
+        if (scoreInfo != null) return scoreInfo!!
+        if (user == null) throw Exception("获取获取用户信息失败")
+        val res = secondClass!!.getScoreInfo(user!!)
+        if (res.isSuccess()) {
+            scoreInfo = res.data
+            return res.data
+        } else throw Exception(res.message)
+    }
+
+    suspend fun getUser(): User {
+        if (user != null) return user!!
+        val res = secondClass!!.getUser()
+        if (res.isSuccess()) {
+            user = res.data
+            return res.data
+        } else throw Exception(res.message)
+    }
+
+    suspend fun getActivityClass(): Rows<ActivityClass> {
+        val res = secondClass!!.getActivityClass()
+        if (res.isSuccess()) {
+            return res.data
+        } else throw Exception(res.message)
+    }
+
+    suspend fun getScoreDetails(): ScoreDetails {
+        if (user == null) throw Exception("获取获取用户信息失败")
+        val res = secondClass!!.getScoreDetail(user!!)
         if (res.isSuccess()) {
             return res.data
         } else throw Exception(res.message)

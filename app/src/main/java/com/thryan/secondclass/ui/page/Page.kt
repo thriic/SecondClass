@@ -50,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
@@ -81,7 +82,6 @@ fun PageBox(viewModel: PageViewModel) {
             .fillMaxSize()
             .semantics { isTraversalGroup = true }
     ) {
-        var expanded by rememberSaveable { mutableStateOf(false) }
         val padding: Int by animateIntAsState(if (active) 0 else 16)
         SearchBar(
             modifier = Modifier
@@ -101,22 +101,8 @@ fun PageBox(viewModel: PageViewModel) {
             placeholder = { Text("搜索活动") },
             leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
             trailingIcon = {
-                IconButton(onClick = { expanded = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = null)
-                    DropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false },
-                    ) {
-                        MenuItem("用户信息") {
-                            viewModel.send(PageIntent.ShowDialog(userInfo = true))
-                            expanded = false
-                        }
-                        val aboutString = stringResource(R.string.about)
-                        MenuItem("使用须知") {
-                            viewModel.send(PageIntent.ShowDialog(aboutString))
-                            expanded = false
-                        }
-                    }
+                IconButton(onClick = { if(!pageState.loading) viewModel.send(PageIntent.openUser) }) {
+                    Icon(painterResource(R.drawable.account_circle), contentDescription = null)
                 }
             },
         ) {
@@ -169,27 +155,6 @@ fun PageBox(viewModel: PageViewModel) {
                 listState = listState
             )
         }
-    }
-}
-
-
-@Composable
-fun MenuItem(text: String, onClick: () -> Unit) {
-    DropdownMenuItem(
-        text = { Text(text) },
-        onClick = onClick
-    )
-}
-
-@Composable
-fun Progress(text: String) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.Center,
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        CircularProgressIndicator()
-        Text(text = text, modifier = Modifier.padding(top = 16.dp))
     }
 }
 

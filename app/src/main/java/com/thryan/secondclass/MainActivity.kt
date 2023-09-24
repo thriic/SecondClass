@@ -28,6 +28,8 @@ import com.thryan.secondclass.ui.login.LoginViewModel
 import com.thryan.secondclass.ui.page.Page
 import com.thryan.secondclass.ui.page.PageViewModel
 import com.thryan.secondclass.ui.theme.SecondClassTheme
+import com.thryan.secondclass.ui.user.User
+import com.thryan.secondclass.ui.user.UserViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -36,14 +38,15 @@ import javax.inject.Inject
 class MainActivity : ComponentActivity() {
     @Inject
     lateinit var navigator: Navigator
+    @Inject
+    lateinit var appDataStore: AppDataStore
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            SecondClassTheme {
-
+            val dynamicColor = appDataStore.getDynamic(true)
+            SecondClassTheme(dynamicColor = dynamicColor) {
                 TransparentSystemBars()
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -86,7 +89,6 @@ fun AppNavHost(
                 navArgument("password") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            Log.i("Main", "我他妈recompose")
             //非常好注入，❤来自驾驶学校
             val pageViewModel = hiltViewModel<PageViewModel>(backStackEntry)
             Page(viewModel = pageViewModel)
@@ -97,11 +99,18 @@ fun AppNavHost(
                 navArgument("id") { type = NavType.StringType }
             )
         ) { backStackEntry ->
-            Log.i("Main", "我他妈recompose")
             val infoViewModel = hiltViewModel<InfoViewModel>(backStackEntry)
             Info(
                 navController,
                 infoViewModel
+            )
+
+        }
+        composable("user") {
+            val userViewModel = hiltViewModel<UserViewModel>()
+            User(
+                navController,
+                userViewModel
             )
 
         }

@@ -1,6 +1,7 @@
 package com.thryan.secondclass.ui.theme
 
 import android.app.Activity
+import android.content.Context
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -14,6 +15,9 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import com.thryan.secondclass.AppDataStore
+import com.thryan.secondclass.model.dataStore
+import javax.inject.Inject
 
 
 private val LightColors = lightColorScheme(
