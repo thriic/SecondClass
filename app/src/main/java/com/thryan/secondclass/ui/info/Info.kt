@@ -245,17 +245,14 @@ fun SignCard(uiState: InfoState, viewModel: InfoViewModel) {
             style = MaterialTheme.typography.titleMedium
         )
         Text(
-            "报名人数: " + uiState.activity.signNum + "/" + uiState.activity.activityNum,
+            "报名人数: " + uiState.activity.signNum + "/" + if (uiState.activity.activityNum == Int.MAX_VALUE) "无限制" else uiState.activity.activityNum,
             style = MaterialTheme.typography.bodyMedium
         )
         Text("报名截止: " + uiState.activity.signTime, style = MaterialTheme.typography.bodyMedium)
         if (uiState.activity.activityStatus in listOf("1", "2") && uiState.activity.isSign == "0")
-            Text("报名待开始或进行中的活动可能失效", style = MaterialTheme.typography.labelMedium)
-        if (uiState.activity.isSign == "0" && uiState.activity.activityStatus in listOf(
-                "0",
-                "1",
-                "2"
-            )
+            Text("报名待开始或进行中的活动存在风险", style = MaterialTheme.typography.labelMedium)
+        if (uiState.activity.isSign == "0" &&
+            uiState.activity.activityStatus in listOf("0", "1", "2")
         ) Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -282,6 +279,9 @@ fun SignInCard(uiState: InfoState, viewModel: InfoViewModel) {
                 else -> "签到"
             }, style = MaterialTheme.typography.titleMedium
         )
+        if (uiState.activity.activityStatus in listOf("0", "1"))
+            Text("签到报名中或待开始的活动存在风险", style = MaterialTheme.typography.labelMedium)
+
         if (uiState.activity.isSign == "1") {
             OutlinedTextField(
                 value = uiState.signInTime,

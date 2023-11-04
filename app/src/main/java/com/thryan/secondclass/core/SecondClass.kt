@@ -174,7 +174,11 @@ class SecondClass(private val twfid: String, var token: String = "") {
             }
         }
 
-    suspend fun getScoreDetail(user: User):HttpResult<ScoreDetails> = requests
+    /**
+     * 获取各类型活动的具体分数
+     * @param user 用户
+     */
+    suspend fun getScoreDetail(user: User): HttpResult<ScoreDetails> = requests
         .get<ScoreDetails> {
             path = "studentScore/appData"
             headers {

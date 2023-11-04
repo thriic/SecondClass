@@ -30,7 +30,7 @@ data class SCActivity(
     val activityHost: String,
     val activityAddress: String,
     val signNum: Int,
-    val activityNum: Int = 120,
+    val activityNum: Int = Int.MAX_VALUE,
     val activityIntegral: Double,
     val activityType: String
 ) {

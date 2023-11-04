@@ -4,12 +4,10 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.thryan.secondclass.core.result.UserInfo
 import com.thryan.secondclass.Navigator
 import com.thryan.secondclass.SCRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -100,7 +98,7 @@ class PageViewModel @Inject constructor(
                 }
             }
 
-            PageIntent.openUser -> {
+            PageIntent.OpenUser -> {
                 navigator.navigate("user")
             }
         }
