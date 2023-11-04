@@ -51,7 +51,10 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.thryan.secondclass.R
 import com.thryan.secondclass.core.result.signIn
+import com.thryan.secondclass.core.utils.formatDate
+import com.thryan.secondclass.core.utils.formatTime
 import com.thryan.secondclass.core.utils.toLocalDateTime
+import com.thryan.secondclass.ui.info.Dialog.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,25 +86,40 @@ fun Info(navController: NavController, viewModel: InfoViewModel) {
             }
         }
     )
-    if (uiState.showSignOutTimePicker) {
-        TimePicker(
-            title = "选择时间",
-            viewModel = viewModel,
-            initialTime = uiState.signOutTime.toLocalDateTime().toLocalTime()
+    when (uiState.showDialog) {
+        SignInTime -> TimePicker(
+            title = "选择签到时间",
+            initialTime = uiState.signInTime.toLocalTime(),
+            onClose = { viewModel.send(InfoIntent.CloseDialog) }
+        ) {
+            viewModel.send(InfoIntent.UpdateSignInTime(it))
+        }
+
+        SignInDate -> DatePicker(
+            title = "选择签到日期",
+            initialDate = uiState.signInTime.toLocalDate(),
+            onClose = { viewModel.send(InfoIntent.CloseDialog) }
+        ) {
+            viewModel.send(InfoIntent.UpdateSignInDate(it))
+        }
+
+        SignOutTime -> TimePicker(
+            title = "选择签退时间",
+            initialTime = uiState.signOutTime.toLocalTime(),
+            onClose = { viewModel.send(InfoIntent.CloseDialog) }
         ) {
             viewModel.send(InfoIntent.UpdateSignOutTime(it))
-            viewModel.send(InfoIntent.UpdateSignInTime(it))
         }
-    } else if (uiState.showSignInTimePicker) {
-        TimePicker(
-            title = "选择时间",
-            viewModel = viewModel,
-            initialTime = uiState.signInTime.toLocalDateTime().toLocalTime()
+
+        SignOutDate -> DatePicker(
+            title = "选择签退日期",
+            initialDate = uiState.signOutTime.toLocalDate(),
+            onClose = { viewModel.send(InfoIntent.CloseDialog) }
         ) {
-            viewModel.send(InfoIntent.UpdateSignInTime(it))
+            viewModel.send(InfoIntent.UpdateSignOutDate(it))
         }
-    } else {
-        LocalFocusManager.current.clearFocus()
+
+        null -> LocalFocusManager.current.clearFocus()
     }
 }
 
@@ -282,30 +300,65 @@ fun SignInCard(uiState: InfoState, viewModel: InfoViewModel) {
         if (uiState.activity.activityStatus in listOf("0", "1"))
             Text("签到报名中或待开始的活动存在风险", style = MaterialTheme.typography.labelMedium)
 
-        if (uiState.activity.isSign == "1") {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
             OutlinedTextField(
-                value = uiState.signInTime,
+                value = uiState.signInTime.formatDate(),
                 onValueChange = {},
                 enabled = uiState.signInfo.signInTime.isEmpty(),
-                label = { Text("${if (uiState.signInfo.signInTime.isEmpty()) "选择" else ""}签到时间") },
+                label = { Text("${if (uiState.signInfo.signInTime.isEmpty()) "选择" else ""}签到日期") },
                 modifier = Modifier.onFocusChanged {
                     if (it.isFocused) {
-                        viewModel.send(InfoIntent.ShowDialog(true))
+                        viewModel.send(InfoIntent.ShowDialog(SignInDate))
                         keyboard?.hide()
                     }
-                }
+                }.weight(1f)
             )
             OutlinedTextField(
-                value = uiState.signOutTime,
+                value = uiState.signInTime.formatTime(),
                 onValueChange = {},
-                enabled = uiState.signInfo.signOutTime.isEmpty(),
-                label = { Text("${if (uiState.signInfo.signOutTime.isEmpty()) "选择" else ""}签退时间") },
+                enabled = uiState.signInfo.signInTime.isEmpty(),
+                label = { Text("签到时间") },
                 modifier = Modifier.onFocusChanged {
                     if (it.isFocused) {
-                        viewModel.send(InfoIntent.ShowDialog(false))
+                        viewModel.send(InfoIntent.ShowDialog(SignInTime))
                         keyboard?.hide()
                     }
-                }
+                }.weight(1f)
+            )
+        }
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            OutlinedTextField(
+                value = uiState.signOutTime.formatDate(),
+                onValueChange = {},
+                enabled = uiState.signInfo.signOutTime.isEmpty(),
+                label = { Text("${if (uiState.signInfo.signOutTime.isEmpty()) "选择" else ""}签退日期") },
+                modifier = Modifier.onFocusChanged {
+                    if (it.isFocused) {
+                        viewModel.send(InfoIntent.ShowDialog(SignOutDate))
+                        keyboard?.hide()
+                    }
+                }.weight(1f)
+            )
+            OutlinedTextField(
+                value = uiState.signOutTime.formatTime(),
+                onValueChange = {},
+                enabled = uiState.signInfo.signOutTime.isEmpty(),
+                label = { Text("签退时间") },
+                modifier = Modifier.onFocusChanged {
+                    if (it.isFocused) {
+                        viewModel.send(InfoIntent.ShowDialog(SignOutTime))
+                        keyboard?.hide()
+                    }
+                }.weight(1f)
             )
         }
         Row(

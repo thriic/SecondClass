@@ -12,6 +12,9 @@ import com.thryan.secondclass.core.utils.after
 import com.thryan.secondclass.core.utils.before
 import com.thryan.secondclass.core.utils.toLocalDateTime
 import com.thryan.secondclass.SCRepository
+import com.thryan.secondclass.core.utils.formatDateTime
+import com.thryan.secondclass.core.utils.toLocalDate
+import com.thryan.secondclass.core.utils.toLocalTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -34,14 +37,11 @@ class InfoViewModel @Inject constructor(
             InfoState(
                 scRepository.getActivity(id)!!,
                 loading = true,
-                showSignCard = true,
-                showSignInCard = true,
                 signInfo = SignInfo(id, "", ""),
-                showSignOutTimePicker = false,
-                showSignInTimePicker = false,
-                signInTime = "",
-                signOutTime = "",
-                link = ""
+                signInTime = LocalDateTime.now(),
+                signOutTime = LocalDateTime.now(),
+                link = "",
+                showDialog = null
             )
         )
     val uiState: StateFlow<InfoState> = _uiState.asStateFlow()
@@ -62,14 +62,14 @@ class InfoViewModel @Inject constructor(
                         signInfo = signInfo,
                         signOutTime = signInfo.signOutTime.substringBefore(".000").ifEmpty {
                             uiState.value.activity.endTime.before(
-                                (5..15).random()
+                                (60 * 5..60 * 15).random()
                             )
-                        },
+                        }.toLocalDateTime(),
                         signInTime = signInfo.signInTime.substringBefore(".000").ifEmpty {
                             uiState.value.activity.startTime.after(
-                                (5..15).random()
+                                (60 * 5..60 * 15).random()
                             )
-                        },
+                        }.toLocalDateTime(),
                         loading = false
                     )
                 }
@@ -93,45 +93,73 @@ class InfoViewModel @Inject constructor(
         Log.i(TAG, infoIntent.toString())
         when (infoIntent) {
             is InfoIntent.UpdateSignInTime -> {
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                val dateTime =
-                    LocalDateTime.parse(uiState.value.signInTime, formatter).toLocalDate()
-                val localDateTime = infoIntent.signInTime.atDate(dateTime)
-                if (localDateTime.isBefore(uiState.value.signOutTime.toLocalDateTime())) {
-                    val timeString = localDateTime.format(formatter)
-                    Log.i(TAG, timeString)
-                    update { copy(signInTime = timeString) }
-                } else {
+                //获取state原本的localDate再与要更改的time拼接
+                val localDate = uiState.value.signInTime.toLocalDate()
+                val localDateTime = infoIntent.signInTime.atDate(localDate)
+                if (localDateTime.isAfter(uiState.value.signOutTime)) {
                     showSnackbar("签到时间不得晚于签退时间")
+                    return
                 }
+                if(localDateTime.isBefore(uiState.value.activity.startTime.toLocalDateTime())){
+                    showSnackbar("签到时间不得早于活动开始时间")
+                    return
+                }
+                Log.i(TAG, "set signInTime ${localDateTime.formatDateTime()}")
+                update { copy(signInTime = localDateTime) }
+            }
+
+            is InfoIntent.UpdateSignInDate -> {
+                //同上，获取state原本的localTime再与要更改的date拼接
+                val localTime = uiState.value.signInTime.toLocalTime()
+                val localDateTime = infoIntent.signInDate.atTime(localTime)
+                if (localDateTime.isAfter(uiState.value.signOutTime)) {
+                    showSnackbar("签到时间不得晚于签退时间")
+                    return
+                }
+                if(localDateTime.isBefore(uiState.value.activity.startTime.toLocalDateTime())){
+                    showSnackbar("签到时间不得早于活动开始时间")
+                    return
+                }
+                Log.i(TAG, "set signInDate ${localDateTime.formatDateTime()}")
+                update { copy(signInTime = localDateTime) }
             }
 
             is InfoIntent.UpdateSignOutTime -> {
-                val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
-                val dateTime =
-                    LocalDateTime.parse(uiState.value.signOutTime, formatter).toLocalDate()
-                val localDateTime = infoIntent.signOutTime.atDate(dateTime)
-                if (localDateTime.isAfter(uiState.value.signInTime.toLocalDateTime())) {
-                    val timeString = localDateTime.format(formatter)
-                    Log.i(TAG, timeString)
-                    update { copy(signOutTime = timeString) }
-                } else {
+                val localDate = uiState.value.signOutTime.toLocalDate()
+                val localDateTime = infoIntent.signOutTime.atDate(localDate)
+                if (localDateTime.isBefore(uiState.value.signInTime)) {
                     showSnackbar("签退时间不得早于签到时间")
+                    return
                 }
+                if(localDateTime.isAfter(uiState.value.activity.endTime.toLocalDateTime())){
+                    showSnackbar("签退时间不得晚于活动结束时间")
+                    return
+                }
+                Log.i(TAG, "set signOutTime ${localDateTime.formatDateTime()}")
+                update { copy(signOutTime = localDateTime) }
+            }
+
+            is InfoIntent.UpdateSignOutDate -> {
+                val localTime = uiState.value.signOutTime.toLocalTime()
+                val localDateTime = infoIntent.signOutDate.atTime(localTime)
+                if (localDateTime.isBefore(uiState.value.signInTime)) {
+                    showSnackbar("签退时间不得早于签到时间")
+                    return
+                }
+                if(localDateTime.isAfter(uiState.value.activity.endTime.toLocalDateTime())){
+                    showSnackbar("签退时间不得晚于活动结束时间")
+                    return
+                }
+                Log.i(TAG, "set signOutTime ${localDateTime.formatDateTime()}")
+                update { copy(signOutTime = localDateTime) }
             }
 
             is InfoIntent.ShowDialog -> {
-                if (infoIntent.signInDialog) update { copy(showSignInTimePicker = true) }
-                else update { copy(showSignOutTimePicker = true) }
+                update { copy(showDialog = infoIntent.dialogType) }
             }
 
             is InfoIntent.CloseDialog -> {
-                update {
-                    copy(
-                        showSignOutTimePicker = false,
-                        showSignInTimePicker = false
-                    )
-                }
+                update { copy(showDialog = null) }
             }
 
             InfoIntent.Sign -> {
@@ -140,7 +168,7 @@ class InfoViewModel @Inject constructor(
 
             InfoIntent.SignIn -> {
                 val (activity, _, signInTime, signOutTime) = uiState.value
-                signIn(activity, signInTime, signOutTime)
+                signIn(activity, signInTime.formatDateTime(), signOutTime.formatDateTime())
             }
 
             InfoIntent.GenerateLink -> generateLink()

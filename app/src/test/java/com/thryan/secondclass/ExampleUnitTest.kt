@@ -3,7 +3,10 @@ package com.thryan.secondclass
 import com.thryan.secondclass.core.SecondClass
 import com.thryan.secondclass.core.WebVpn
 import com.thryan.secondclass.core.result.HttpResult
-import com.thryan.secondclass.core.utils.success
+import com.thryan.secondclass.core.result.isSuccess
+import com.thryan.secondclass.core.utils.formatDate
+import com.thryan.secondclass.core.utils.formatDateTime
+import com.thryan.secondclass.core.utils.formatTime
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
@@ -25,7 +28,6 @@ class ExampleUnitTest {
             ignoreUnknownKeys = true
         }
 
-
         val jsonString = """
         {"success":true,"code":200,"message":"请求成功","data":"eyJhbGciOiJIUzUxMiJ9.eyJ1c2VySWQiOjE1ODA1MDkwNjQyOTc3MDk1NzAsImFjY291bnQiOiIyMDIyMTAxMDYzIiwidXVpZCI6IjE0ZTgyMzAyLTU5NjYtNGE0Yi04ZDZkLTkxNDEwNmExYjU1NCIsInN1YiI6IjE1ODA1MDkwNjQyOTc3MDk1NzAiLCJpYXQiOjE2ODY0ODA3MjMsImV4cCI6MTY4NjU2NzEyM30.jMlvB9VEGa9OP9pp-GeU-ZTgQUBQZ25Z3zsC3IKJ65HXqr4ymVonNFeY89npNe4MbV6yioGLBaD5UNh374ZVQQ"}
     """.trimIndent()
@@ -35,12 +37,12 @@ class ExampleUnitTest {
 
     @Test
     fun web() = runBlocking {
-        val re = WebVpn.login("", "")
-        if (re.success()) {
-            println(re.message + " " + re.data)
-        } else {
-            println(re.message)
-        }
+//        val re = WebVpn.login("", "")
+//        if (re.isSuccess()) {
+//            println(re.message + " " + re.data)
+//        } else {
+//            println(re.message)
+//        }
     }
 
     @Test
@@ -55,17 +57,16 @@ class ExampleUnitTest {
         val secondClass = SecondClass("1602fd5210ef6c58")
         val res = secondClass.login("2022101063")
         println(res.message)
-        if (res.success()) {
+        if (res.isSuccess()) {
             println(res.data)
             val activity = secondClass.getActivities(1,20)
-            if (activity.success())
+            if (activity.isSuccess())
                 println(activity.data.rows.size)
         }
         val us = secondClass.getUser()
         println(us)
         val score = secondClass.getScoreInfo(us.data)
         println(score)
-
     }
 
 
@@ -73,6 +74,9 @@ class ExampleUnitTest {
     fun time() = runBlocking {
         val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")
         val dateTime = LocalDateTime.parse("2023-06-11 00:00:00", formatter)
+        val date2 = LocalDateTime.parse("2023-06-12 01:12:56", formatter)
+        val s = date2.toLocalDate().atTime(dateTime.toLocalTime())
+        println(s.formatDateTime())
     }
 
 }
