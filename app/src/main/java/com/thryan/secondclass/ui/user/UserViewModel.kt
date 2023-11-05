@@ -4,8 +4,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thryan.secondclass.AppDataStore
 import com.thryan.secondclass.SCRepository
-import com.thryan.secondclass.core.result.ActivityClass
-import com.thryan.secondclass.core.result.ScoreDetail
+import com.thryan.secondclass.core.data.ActivityClass
+import com.thryan.secondclass.core.data.ScoreDetail
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -21,11 +21,11 @@ class UserViewModel @Inject constructor(
 ) : ViewModel() {
     private val _userState = MutableStateFlow(
         UserState(
-            user = com.thryan.secondclass.core.result.User("", "", 1),
+            user = com.thryan.secondclass.core.data.User("", "", 1),
             loading = true,
             radarScore = emptyList(),
-            scoreInfo = com.thryan.secondclass.core.result.ScoreInfo(0.0, 0, 0, 0),
-            dynamic = appDataStore.getDynamic(true)
+            scoreInfo = com.thryan.secondclass.core.data.ScoreInfo(0.0, 0, 0, 0),
+            dynamic = appDataStore.getDynamic(false)
         )
     )
     val userState: StateFlow<UserState> = _userState.asStateFlow()

@@ -45,7 +45,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         setContent {
-            val dynamicColor = appDataStore.getDynamic(true)
+            val dynamicColor = appDataStore.getDynamic(false)
             SecondClassTheme(dynamicColor = dynamicColor) {
                 TransparentSystemBars()
                 Surface(
