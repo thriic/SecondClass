@@ -1,18 +1,20 @@
 package com.thryan.secondclass
 
 import android.util.Log
-import com.thryan.secondclass.core.SecondClass
-import com.thryan.secondclass.core.result.ActivityClass
-import com.thryan.secondclass.core.result.HttpResult
-import com.thryan.secondclass.core.result.Rows
-import com.thryan.secondclass.core.result.SCActivity
-import com.thryan.secondclass.core.result.ScoreDetail
-import com.thryan.secondclass.core.result.ScoreDetails
-import com.thryan.secondclass.core.result.ScoreInfo
-import com.thryan.secondclass.core.result.SignInfo
-import com.thryan.secondclass.core.result.SignResult
-import com.thryan.secondclass.core.result.User
-import com.thryan.secondclass.core.result.isSuccess
+import cn.thriic.common.SecondClass
+import cn.thriic.common.data.ActivityClass
+import cn.thriic.common.data.ActivityStatus
+import cn.thriic.common.data.ActivityType
+import cn.thriic.common.data.HttpResult
+import cn.thriic.common.data.Rows
+import cn.thriic.common.data.SCActivity
+import cn.thriic.common.data.ScoreDetails
+import cn.thriic.common.data.ScoreInfo
+import cn.thriic.common.data.SignInfo
+import cn.thriic.common.data.SignResult
+import cn.thriic.common.data.User
+import cn.thriic.common.data.isSuccess
+import com.thryan.secondclass.ui.page.FilterState
 import com.thryan.secondclass.ui.user.RadarScore
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -27,6 +29,8 @@ class SCRepository {
 
     var radarScores: List<RadarScore>? = null
     var scoreInfo: ScoreInfo? = null
+    var onlySign: Boolean? = null
+    var myActivities: List<SCActivity>? = null
 
 
     fun getActivity(id: String): SCActivity? {
@@ -36,7 +40,7 @@ class SCRepository {
         return null
     }
 
-    suspend fun setActivity(id: String, isSign: String) {
+    suspend fun updateActivitySign(id: String, isSign: String) {
         activities.emit(activities.value.map {
             if (it.id == id) return@map it.copy(isSign = isSign)
             else return@map it
@@ -60,14 +64,37 @@ class SCRepository {
     suspend fun getActivities(
         pageNo: Int = 1,
         pageSize: Int = 5,
-        keyword: String = "",
+        filter: FilterState,
         clear: Boolean = false
     ): Int {
-        val res = secondClass!!.getActivities(pageNo, pageSize, keyword)
-        if (res.isSuccess()) {
-            activities.emit(if (clear) res.data.rows else activities.value + res.data.rows)
-            return res.data.rows.size
-        } else throw Exception(res.message)
+        if (filter.onlySign) {
+            if (this.onlySign != true || this.myActivities == null || this.myActivities!!.isEmpty() || this.myActivities!!.first().status != filter.status) {
+                this.onlySign = true
+                val res =
+                    secondClass!!.getMyActivities(activityStatus = ActivityStatus.getId(filter.status))
+                if (res.isSuccess()) {
+                    myActivities = res.data.reversed()
+                } else throw Exception(res.message)
+            }
+            val typeId = ActivityType.getId(filter.type)
+            activities.emit(myActivities!!.filter {
+                (filter.keyword == "" || it.activityName.contains(filter.keyword)) && (typeId == "" || typeId == it.activityType)
+            })
+            return myActivities!!.size
+        } else {
+            this.onlySign = false
+            val res = secondClass!!.getActivities(
+                pageNo,
+                pageSize,
+                activityName = filter.keyword,
+                activityStatus = ActivityStatus.getId(filter.status),
+                activityType = ActivityType.getId(filter.type)
+            )
+            if (res.isSuccess()) {
+                activities.emit(if (clear) res.data.rows else activities.value + res.data.rows)
+                return res.data.rows.size
+            } else throw Exception(res.message)
+        }
     }
 
 

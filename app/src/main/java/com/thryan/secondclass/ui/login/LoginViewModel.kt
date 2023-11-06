@@ -3,9 +3,9 @@ package com.thryan.secondclass.ui.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cn.thriic.common.WebVpn
+import cn.thriic.common.data.VpnInfo
 import com.thryan.secondclass.AppDataStore
-import com.thryan.secondclass.core.WebVpn
-import com.thryan.secondclass.core.result.VpnInfo
 import com.thryan.secondclass.Navigator
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers

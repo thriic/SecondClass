@@ -6,7 +6,13 @@ sealed class PageIntent {
     object UpdateActivity : PageIntent()
     object LoadMore : PageIntent()
     object OpenUser : PageIntent()
-    data class Search(val keyword: String) : PageIntent()
+    data class Search(
+        val keyword: String = "",
+        val onlySign: Boolean = false,
+        val status: String = "",
+        val type: String = ""
+    ) : PageIntent()
+
     data class ShowDialog(val message: String = "", val userInfo: Boolean = false) : PageIntent()
     data class OpenActivity(val id: String) : PageIntent()
 }

@@ -50,10 +50,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.thryan.secondclass.R
-import com.thryan.secondclass.core.result.signIn
-import com.thryan.secondclass.core.utils.formatDate
-import com.thryan.secondclass.core.utils.formatTime
-import com.thryan.secondclass.core.utils.toLocalDateTime
+import cn.thriic.common.data.signIn
+import cn.thriic.common.utils.formatDate
+import cn.thriic.common.utils.formatTime
 import com.thryan.secondclass.ui.info.Dialog.*
 
 @OptIn(ExperimentalMaterial3Api::class)

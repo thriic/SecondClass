@@ -1,6 +1,6 @@
 package com.thryan.secondclass.ui.page
 
-import com.thryan.secondclass.core.result.SCActivity
+import cn.thriic.common.data.SCActivity
 
 sealed class PageActions {
     fun reduce(oldState: PageState): PageState {

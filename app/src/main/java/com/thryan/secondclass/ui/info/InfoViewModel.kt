@@ -6,22 +6,19 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.thryan.secondclass.core.result.SCActivity
-import com.thryan.secondclass.core.result.SignInfo
-import com.thryan.secondclass.core.utils.after
-import com.thryan.secondclass.core.utils.before
-import com.thryan.secondclass.core.utils.toLocalDateTime
+import cn.thriic.common.data.SCActivity
+import cn.thriic.common.data.SignInfo
+import cn.thriic.common.utils.after
+import cn.thriic.common.utils.before
+import cn.thriic.common.utils.toLocalDateTime
 import com.thryan.secondclass.SCRepository
-import com.thryan.secondclass.core.utils.formatDateTime
-import com.thryan.secondclass.core.utils.toLocalDate
-import com.thryan.secondclass.core.utils.toLocalTime
+import cn.thriic.common.utils.formatDateTime
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import javax.inject.Inject
 
 @HiltViewModel
@@ -215,7 +212,7 @@ class InfoViewModel @Inject constructor(
                     signInfo = signInfo
                 )
             }
-            scRepository.setActivity(id, "1")
+            scRepository.updateActivitySign(id, "1")
             showSnackbar(res.data.msg)
         } catch (e: Exception) {
             Log.e(TAG, e.toString())

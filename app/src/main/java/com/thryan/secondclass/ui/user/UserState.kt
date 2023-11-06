@@ -1,7 +1,7 @@
 package com.thryan.secondclass.ui.user
 
-import com.thryan.secondclass.core.result.ScoreInfo
-import com.thryan.secondclass.core.result.User
+import cn.thriic.common.data.ScoreInfo
+import cn.thriic.common.data.User
 
 data class UserState(
     val user: User,

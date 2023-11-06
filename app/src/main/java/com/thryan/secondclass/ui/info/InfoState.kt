@@ -1,7 +1,7 @@
 package com.thryan.secondclass.ui.info
 
-import com.thryan.secondclass.core.result.SCActivity
-import com.thryan.secondclass.core.result.SignInfo
+import cn.thriic.common.data.SCActivity
+import cn.thriic.common.data.SignInfo
 import java.time.LocalDateTime
 
 data class InfoState(

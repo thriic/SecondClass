@@ -1,7 +1,6 @@
 package com.thryan.secondclass.ui.page
 
-import androidx.compose.animation.core.animateIntAsState
-import androidx.compose.foundation.clickable
+
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,18 +17,13 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SearchBar
 import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.SuggestionChipDefaults
@@ -38,9 +32,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
@@ -50,7 +41,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.semantics.traversalIndex
 import androidx.compose.ui.unit.dp
 import com.thryan.secondclass.R
-import com.thryan.secondclass.core.result.SCActivity
+import cn.thriic.common.data.SCActivity
 
 @Composable
 fun Page(viewModel: PageViewModel) {
@@ -58,7 +49,6 @@ fun Page(viewModel: PageViewModel) {
     PageBox(viewModel)
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PageBox(viewModel: PageViewModel) {
     val pageState by viewModel.pageState.collectAsState()
@@ -66,78 +56,22 @@ fun PageBox(viewModel: PageViewModel) {
 
     if (pageState.showingDialog) Dialog(pageState = pageState, viewModel = viewModel)
 
-    var text by rememberSaveable { mutableStateOf("") }
-    var active by rememberSaveable { mutableStateOf(false) }
-
     Box(
         Modifier
             .fillMaxSize()
             .semantics { isTraversalGroup = true }
     ) {
-        val padding: Int by animateIntAsState(if (active) 0 else 16)
-        SearchBar(
+        Search(
             modifier = Modifier
                 .align(Alignment.TopCenter)
-                .semantics { traversalIndex = -1f }
-                .padding(horizontal = padding.dp),
-            query = text,
-            onQueryChange = { text = it },
-            onSearch = {
-                viewModel.send(PageIntent.Search(text))
-                active = false
-            },
-            active = active,
-            onActiveChange = {
-                active = it
-            },
-            placeholder = { Text("搜索活动") },
-            leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
+                .semantics { traversalIndex = -1f },
+            viewModel = viewModel,
             trailingIcon = {
-                IconButton(onClick = { if(!pageState.loading) viewModel.send(PageIntent.OpenUser) }) {
+                IconButton(onClick = { if (!pageState.loading) viewModel.send(PageIntent.OpenUser) }) {
                     Icon(painterResource(R.drawable.account_circle), contentDescription = null)
                 }
-            },
-        ) {
-            LazyColumn {
-                item {
-                    ListItem(
-                        headlineContent = { Text("清空搜索框") },
-                        leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
-                        modifier = Modifier
-                            .clickable {
-                                text = ""
-                                active = false
-                                viewModel.send(PageIntent.Search(text))
-                            }
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                    )
-                }
-                item {
-                    ListItem(
-                        headlineContent = { Text("tips 1") },
-                        supportingContent = { Text("回车键搜索") },
-                        leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
-                        modifier = Modifier
-                            .clickable {}
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                    )
-                }
-                item {
-                    ListItem(
-                        headlineContent = { Text("tips 2") },
-                        supportingContent = { Text("是的，因为懒得做搜索历史所以用这些水布局") },
-                        leadingContent = { Icon(Icons.Filled.Star, contentDescription = null) },
-                        modifier = Modifier
-                            .clickable {}
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp, vertical = 4.dp)
-                    )
-                }
             }
-        }
-
+        )
         if (pageState.loading)
             Progress(pageState.loadingMsg)
         else {
@@ -187,10 +121,21 @@ fun ActivityList(
             }
         }
         if (pageState.loadMore) item {
-            //这里应该有个全部加载完成后显示”加载完毕“
-            //活动数量太多了，我相信没人无聊到拉完
-            //Lazy
             Progress(text = "")
+        }
+        else if(pageState.activities.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "空",
+                        modifier = Modifier.padding(top = 16.dp)
+                    )
+                }
+            }
         }
 
     }
@@ -275,6 +220,7 @@ private fun Dialog(
 ) {
     AlertDialog(
         onDismissRequest = {
+            viewModel.send(PageIntent.CloseDialog)
         },
         title = { Text("第二课堂") },
         text = { Text(pageState.dialogContent) },

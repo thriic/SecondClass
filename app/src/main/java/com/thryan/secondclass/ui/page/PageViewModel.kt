@@ -30,11 +30,20 @@ class PageViewModel @Inject constructor(
             showingDialog = false,
             dialogContent = "",
             activities = emptyList(),
-            loadMore = true,
-            keyword = ""
+            loadMore = true
         )
     )
     val pageState: StateFlow<PageState> = _pageState.asStateFlow()
+
+    private val _filterState = MutableStateFlow(
+        FilterState(
+            keyword = "",
+            onlySign = false,
+            status = "",
+            type = ""
+        )
+    )
+    val filterState: StateFlow<FilterState> = _filterState.asStateFlow()
 
 
     private val twfid = savedStateHandle.get<String>("twfid") ?: throw Exception()
@@ -81,18 +90,32 @@ class PageViewModel @Inject constructor(
             }
 
             PageIntent.LoadMore -> {
-                if(!isLoading){
+                if (!isLoading) {
                     isLoading = true
                     getActivities()
                 }
             }
 
+
             is PageIntent.Search -> {
-                if (intent.keyword != pageState.value.keyword) {
+                val (keyword, onlySign, status, type) = filterState.value
+                if (intent.keyword != keyword || intent.onlySign != onlySign || intent.status != status || intent.type != type) {
                     //清空列表
                     update {
-                        copy(keyword = intent.keyword, loadMore = true)
+                        copy(activities = emptyList(), loadMore = true)
                     }
+                    updateFilter {
+                        copy(
+                            keyword = intent.keyword,
+                            onlySign = intent.onlySign,
+                            status = intent.status,
+                            type = intent.type
+                        )
+                    }
+                    Log.i(
+                        TAG,
+                        "filter ${intent.keyword} ${intent.onlySign} ${intent.status} ${intent.type}"
+                    )
                     currentPageNum = 0
                     getActivities(clear = true)
                 }
@@ -113,9 +136,15 @@ class PageViewModel @Inject constructor(
         try {
             currentPageNum += 1
             val size =
-                scRepository.getActivities(currentPageNum, pageSize, pageState.value.keyword, clear)
+                scRepository.getActivities(
+                    currentPageNum,
+                    pageSize,
+                    filterState.value,
+                    clear
+                )
             isLoading = false
-            if (size <= 0) update { copy(loadMore = false) }
+            //获取活动数量为0 或者 过滤仅报名 时 停止加载更多
+            if (size <= 0 || filterState.value.onlySign) update { copy(loadMore = false) }
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
             update(PageActions.Dialog(e.message!!).reduce(pageState.value))
@@ -147,6 +176,12 @@ class PageViewModel @Inject constructor(
         val newState: PageState
         pageState.value.apply { newState = block() }
         _pageState.emit(newState)
+    }
+
+    private suspend fun updateFilter(block: FilterState.() -> FilterState) {
+        val newState: FilterState
+        filterState.value.apply { newState = block() }
+        _filterState.emit(newState)
     }
 
     companion object {
