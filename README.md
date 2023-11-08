@@ -20,10 +20,5 @@ cuit第二课堂安卓客户端
 Redmi K50 Android13 校外网
 
 ## 使用截图
-| ![image](ScreenShots/login.jpg) | ![image](ScreenShots/page.jpg)  | ![image](ScreenShots/info.jpg)  |
-|---------------------------------|---------------------------------|---------------------------------|
-
-
-
-
-*具体实现详见[SecondClass.kt](https://github.com/thriic/SecondClass/blob/master/app/src/main/java/com/thryan/secondclass/core/SecondClass.kt)*
+| ![image](ScreenShots/login.jpg) | ![image](ScreenShots/page.jpg)  | ![image](ScreenShots/info.jpg)  | ![image](ScreenShots/search.jpg) | ![image](ScreenShots/user.jpg) |
+|---------------------------------|---------------------------------|---------------------------------|----------------------------------|--------------------------------|
