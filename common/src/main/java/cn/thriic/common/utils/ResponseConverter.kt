@@ -41,9 +41,9 @@ class ResponseConverter(val type: ResponseType) {
                 try {
                     json.decodeFromString(value.trimIndent())
                 } catch (e: Exception) {
-                    if (e.message?.contains("Field 'data' is required for type with serial name 'com.thryan.secondclass.core.result.HttpResult'") == true) {
+                    if (e.message?.contains("Field 'data' is required for type with serial name 'cn.thriic.common.data.HttpResult'") == true) {
                         val signIn = json.decodeFromString<SignInResult>(value.trimIndent())
-                        HttpResult(signIn.message,"" as T)
+                        HttpResult(signIn.message, "" as T)
                     } else throw e
                 }
             }

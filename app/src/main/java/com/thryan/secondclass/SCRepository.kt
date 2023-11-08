@@ -100,6 +100,11 @@ class SCRepository {
 
     suspend fun getSignInfo(activity: SCActivity): List<SignInfo> {
         val res = secondClass!!.getSignInfo(activity)
+        //防止获取到空id
+        //TODO 处理可能存在活动id获取正常，但是签到id一直无法获取的情况
+        if (res.data.rows.isNotEmpty() && res.data.rows[0].id.contains("**")) return getSignInfo(
+            activity
+        )
         return res.data.rows
     }
 
@@ -118,7 +123,7 @@ class SCRepository {
     ): String {
         val res = secondClass!!.signIn(activity, signInfo, signInTime, signOutTime)
         if (res.isSuccess()) {
-            return res.data
+            return res.message
         } else throw Exception(res.message)
     }
 
