@@ -1,12 +1,16 @@
 package com.thryan.secondclass.ui.login
 
 import android.annotation.SuppressLint
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.statusBarsPadding
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 
 
@@ -14,10 +18,25 @@ import kotlinx.coroutines.delay
 @Composable
 fun Login(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
     val uiState by viewModel.uiState.collectAsState()
-    val url = ""
-    webView(
-        modifier = Modifier.fillMaxSize().statusBarsPadding(), url
+    val url = "http://ekt-cuit-edu-cn.webvpn.cuit.edu.cn:8118/api/mSsoLogin"
+    WebView(
+        Modifier.fillMaxSize().statusBarsPadding(), viewModel, url
     )
+    if (uiState.pending) {
+        val interactionSource = remember { MutableInteractionSource() }
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color(0x88FFFFFF))
+                // 拦截对WebView的点击
+                .clickable(onClick = {}, interactionSource = interactionSource, indication = null)
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(64.dp)
+            )
+        }
+    }
     if (uiState.showDialog) Dialog(message = uiState.message, viewModel = viewModel)
 }
 

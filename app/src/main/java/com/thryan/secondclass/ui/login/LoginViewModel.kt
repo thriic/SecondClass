@@ -138,6 +138,10 @@ class LoginViewModel @Inject constructor(
                 update(uiState.value.copy(showPassword = intent.visible))
             }
 
+            is LoginIntent.UpdatePending -> {
+                update(uiState.value.copy(pending = intent.isPending))
+            }
+
             is LoginIntent.Init -> {
                 update(
                     uiState.value.copy(

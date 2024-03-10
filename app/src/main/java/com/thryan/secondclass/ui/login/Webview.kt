@@ -1,44 +1,81 @@
 package com.thryan.secondclass.ui.login
 
 import android.annotation.SuppressLint
+import android.app.Activity
 import android.graphics.Bitmap
+import android.util.Log
 import android.view.ViewGroup
-import android.webkit.JavascriptInterface
-import android.webkit.WebChromeClient
-import android.webkit.WebView
-import android.webkit.WebViewClient
+import android.webkit.*
 import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.viewinterop.AndroidView
 import com.thryan.secondclass.BuildConfig
 import kotlinx.coroutines.launch
+import java.util.regex.Pattern
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun webView(
+fun WebView(
     modifier: Modifier = Modifier,
-    url: String,
+    viewModel: LoginViewModel,
+    targetUrl: String
 ) {
+    val activity = LocalContext.current as Activity
+    lateinit var webView: WebView
+    val jwcPattern = Pattern.compile(".*\\.cuit\\.edu\\.cn[^/]*/authserver/.*")
     val webViewChromeClient = object : WebChromeClient() {
         override fun onProgressChanged(view: WebView, newProgress: Int) {
-            //回调网页内容加载进度
-            //TODO
+            if (newProgress < 100) {
+                viewModel.send(LoginIntent.UpdatePending(true))
+            } else {
+                viewModel.send(LoginIntent.UpdatePending(false))
+            }
             super.onProgressChanged(view, newProgress)
         }
     }
     val webViewClient = object : WebViewClient() {
-        override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-            super.onPageStarted(view, url, favicon)
+        override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+            val path = request.url.path!!
+//            Log.d("webview", path)
+
+            //由于Cloudflare在璃月访问慢且Android WebView缓存大小限制为20MB，因此手动替换为本地资源
+            if (path.contains("cuit/captcha")) {
+                val filename = path.split("/").last()
+                val inputStream = activity.assets.open(filename)
+                val mimeType = if (filename.contains(".js")) {
+                    "application/javascript"
+                } else {
+                    "application/wasm"
+                }
+                val response = WebResourceResponse(mimeType, "UTF-8", inputStream)
+                val headers = HashMap<String, String>()
+                headers["Access-Control-Allow-Origin"] = "*"
+                response.responseHeaders = headers
+                return response
+            }
+            return null
         }
 
-        override fun onPageFinished(view: WebView?, url: String?) {
-            super.onPageFinished(view, url)
+        override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+
+        }
+
+        override fun onPageFinished(view: WebView, url: String) {
+            Log.d("webview", url)
+            if (url == "https://webvpn.cuit.edu.cn/portal/#!/service") {
+                Log.d("webview", "service")
+                view.loadUrl(targetUrl)
+            } else if (jwcPattern.matcher(url).matches() or (url == "https://webvpn.cuit.edu.cn/portal/#!/login")) {
+                //如果是登录页面则注入填写验证码的js脚本
+                Log.d("webview", "inject script")
+                view.loadUrl("javascript:(()=>{window.resourcePath=\"https://static.wed0n.top/cuit/captcha/\";const script=document.createElement(\"script\");script.src=resourcePath+\"script.js\";script.type=\"module\";document.body.appendChild(script);})()")
+            }
         }
     }
 
-    lateinit var webView: WebView
     val coroutineScope = rememberCoroutineScope()
     AndroidView(modifier = modifier, factory = { context ->
         WebView(context).apply {
@@ -50,11 +87,11 @@ fun webView(
             WebView.setWebContentsDebuggingEnabled(BuildConfig.DEBUG)
             this.webChromeClient = webViewChromeClient
             this.webViewClient = webViewClient
-            this.addJavascriptInterface(JavaScriptInterface(), "app")
             settings.apply {
                 //支持js交互
                 javaScriptEnabled = true
                 javaScriptCanOpenWindowsAutomatically = true
+                domStorageEnabled = true
                 //将图片调整到适合webView的大小
                 useWideViewPort = true
                 //缩放至屏幕的大小
@@ -65,27 +102,16 @@ fun webView(
                 displayZoomControls = false
             }
             webView = this
-            loadUrl(url)
+            loadUrl(targetUrl)
         }
     })
     BackHandler {
         coroutineScope.launch {
-            //自行控制点击了返回按键之后，关闭页面还是返回上一级网页
             if (webView.canGoBack()) {
                 webView.goBack()
             } else {
-                //TODO
+                activity.finish()
             }
         }
     }
-}
-
-class JavaScriptInterface {
-    @get:JavascriptInterface
-    @set:JavascriptInterface
-    var username: String = ""
-
-    @get:JavascriptInterface
-    @set:JavascriptInterface
-    var password: String = ""
 }
