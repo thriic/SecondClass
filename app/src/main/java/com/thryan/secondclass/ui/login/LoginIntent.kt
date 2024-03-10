@@ -10,4 +10,5 @@ sealed class LoginIntent {
     data class UpdateSCAccount(val scAccount: String) : LoginIntent()
     data class UpdatePasswordVisible(val visible: Boolean) : LoginIntent()
     data class UpdatePending(val isPending: Boolean) : LoginIntent()
+    data class WebLogin(val twfid: String, val token: String) : LoginIntent()
 }

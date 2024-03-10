@@ -3,10 +3,12 @@ package com.thryan.secondclass.ui.login
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import cn.thriic.common.SecondClass
 import cn.thriic.common.WebVpn
 import cn.thriic.common.data.VpnInfo
 import com.thryan.secondclass.AppDataStore
 import com.thryan.secondclass.Navigator
+import com.thryan.secondclass.SCRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -20,7 +22,8 @@ import javax.inject.Inject
 @HiltViewModel
 class LoginViewModel @Inject constructor(
     private val appDataStore: AppDataStore,
-    private val navigator: Navigator
+    private val navigator: Navigator,
+    private val scRepository: SCRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(LoginState("", "", "", false, "", false, false))
@@ -140,6 +143,19 @@ class LoginViewModel @Inject constructor(
 
             is LoginIntent.UpdatePending -> {
                 update(uiState.value.copy(pending = intent.isPending))
+            }
+
+            is LoginIntent.WebLogin -> {
+                scRepository.secondClass = SecondClass(intent.twfid, intent.token)
+                appDataStore.putLastTime(
+                    System.currentTimeMillis().toString()
+                )
+                withContext(Dispatchers.Main) {
+                    navigator.navigate("page?twfid=\"\"&account=\"\"&password=\"\"") {
+                        popUpTo("login") { inclusive = true }
+                        launchSingleTop = true
+                    }
+                }
             }
 
             is LoginIntent.Init -> {

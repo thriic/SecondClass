@@ -2,7 +2,6 @@ package com.thryan.secondclass.ui.login
 
 import android.annotation.SuppressLint
 import android.app.Activity
-import android.graphics.Bitmap
 import android.util.Log
 import android.view.ViewGroup
 import android.webkit.*
@@ -37,8 +36,12 @@ fun WebView(
         }
     }
     val webViewClient = object : WebViewClient() {
+        var twfid: String = ""
+        var token: String = ""
         override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
-            val path = request.url.path!!
+            val url = request.url
+            val host = url.host!!
+            val path = url.path!!
 //            Log.d("webview", path)
 
             //由于Cloudflare在璃月访问慢且Android WebView缓存大小限制为20MB，因此手动替换为本地资源
@@ -53,14 +56,27 @@ fun WebView(
                 val response = WebResourceResponse(mimeType, "UTF-8", inputStream)
                 val headers = HashMap<String, String>()
                 headers["Access-Control-Allow-Origin"] = "*"
+                headers["Cache-Control"]="no-cache, no-store"
                 response.responseHeaders = headers
                 return response
+            } else if (host.contains("ekty-cuit-edu-cn")) {
+                val cookie = CookieManager.getInstance().getCookie(url.toString())
+                Log.d("webLogin", "cookie $cookie")
+                if (cookie != null) {
+                    twfid = cookie.split("TWFID=")[1]
+                }
+            } else if (host.contains("ekt-cuit-edu-cn")) {
+                val authorization = request.requestHeaders["Authorization"]
+                Log.d("webLogin", "auth $authorization")
+                if (authorization != null) {
+                    token = authorization.split(" ")[1]
+                }
+            }
+
+            if (twfid != "" && token != "") {
+                viewModel.send(LoginIntent.WebLogin(twfid, token))
             }
             return null
-        }
-
-        override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
-
         }
 
         override fun onPageFinished(view: WebView, url: String) {
