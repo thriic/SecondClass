@@ -54,7 +54,7 @@ class PageViewModel @Inject constructor(
 
     init {
         Log.i(TAG, "PageViewModel Created")
-        scRepository.init(twfid, account, password)
+//        scRepository.init(twfid, account, password)
         send(PageIntent.Init)
         viewModelScope.launch {
             scRepository.activities.collect {
@@ -155,8 +155,8 @@ class PageViewModel @Inject constructor(
     private suspend fun login() = withContext(Dispatchers.IO) {
         try {
             update(PageActions.Loading("登录中").reduce(pageState.value))
-            val loginResult = scRepository.login()
-            Log.i(TAG, "login secondclass $loginResult")
+//            val loginResult = scRepository.login()
+//            Log.i(TAG, "login secondclass $loginResult")
             update(PageActions.Loading("获取活动信息").reduce(pageState.value))
             val activityJob = launch { this@PageViewModel.getActivities() }
             activityJob.join()

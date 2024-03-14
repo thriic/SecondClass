@@ -21,7 +21,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 class SCRepository {
 
     val activities: MutableStateFlow<List<SCActivity>> = MutableStateFlow(emptyList())
-    private var secondClass: SecondClass? = null
+    var secondClass: SecondClass? = null
     private var account: String? = null
     private var password: String? = null
 
