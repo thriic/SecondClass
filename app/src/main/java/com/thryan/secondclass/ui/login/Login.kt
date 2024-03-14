@@ -28,7 +28,9 @@ fun Login(modifier: Modifier = Modifier, viewModel: LoginViewModel) {
             contentAlignment = Alignment.Center,
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0x88FFFFFF))
+                .background(with(MaterialTheme.colorScheme.background) {
+                    Color(red, green, blue, 0.5f)
+                })
                 // 拦截对WebView的点击
                 .clickable(onClick = {}, interactionSource = interactionSource, indication = null)
         ) {
