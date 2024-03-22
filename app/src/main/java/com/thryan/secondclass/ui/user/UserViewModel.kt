@@ -1,5 +1,6 @@
 package com.thryan.secondclass.ui.user
 
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.thryan.secondclass.AppDataStore
@@ -25,7 +26,8 @@ class UserViewModel @Inject constructor(
             loading = true,
             radarScore = emptyList(),
             scoreInfo = cn.thriic.common.data.ScoreInfo(0.0, 0, 0, 0),
-            dynamic = appDataStore.getDynamic(false)
+            dynamic = appDataStore.getDynamic(false),
+            webView = appDataStore.getWebView(false)
         )
     )
     val userState: StateFlow<UserState> = _userState.asStateFlow()
@@ -78,6 +80,11 @@ class UserViewModel @Inject constructor(
 
             UserIntent.Dialog -> {
 
+            }
+
+            is UserIntent.ChangeWebView -> {
+                update { copy(webView = intent.checked) }
+                appDataStore.putWebView(intent.checked)
             }
         }
     }

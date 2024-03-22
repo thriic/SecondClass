@@ -7,5 +7,6 @@ data class LoginState(
     val showDialog: Boolean,
     val message: String,
     val showPassword: Boolean,
-    val pending: Boolean
+    val pending: Boolean,
+    val webView: Boolean
 )

@@ -104,7 +104,7 @@ fun User(navController: NavController, userViewModel: UserViewModel) {
                         )
                     }
                     item {
-                        OtherInfo(userState.dynamic, userViewModel)
+                        OtherInfo(userState.dynamic, userState.webView, userViewModel)
                     }
                 }
             }
@@ -186,29 +186,34 @@ fun ScoreInfo(userViewModel: UserViewModel) {
 }
 
 @Composable
-fun OtherInfo(checked: Boolean, viewModel: UserViewModel) {
-    ItemSubTitle("其他")
-    val icon: (@Composable () -> Unit)? = if (checked) {
-        {
-            Icon(
-                imageVector = Icons.Filled.Check,
-                contentDescription = null,
-                modifier = Modifier.size(SwitchDefaults.IconSize),
-            )
-        }
-    } else null
+fun OtherInfo(dynamicChecked: Boolean, webViewChecked: Boolean, viewModel: UserViewModel) {
+    ItemSubTitle("设置")
+
     val context = LocalContext.current
+    ListItem(
+        modifier = Modifier.clickable { },
+        description = "通过WebView登录",
+    ) { modifier ->
+        Switch(
+            modifier = modifier,
+            thumbContent = { SwitchIcon(checked = webViewChecked) },
+            checked = webViewChecked,
+            onCheckedChange = {
+                viewModel.send(UserIntent.ChangeWebView(it))
+                Toast.makeText(context, "下一次打开app生效", Toast.LENGTH_SHORT).show()
+            })
+    }
     ListItem(
         modifier = Modifier.clickable { },
         description = "动态配色",
     ) { modifier ->
         Switch(
             modifier = modifier,
-            thumbContent = icon,
-            checked = checked,
+            thumbContent = { SwitchIcon(checked = dynamicChecked) },
+            checked = dynamicChecked,
             onCheckedChange = {
                 viewModel.send(UserIntent.ChangeDynamic(it))
-                Toast.makeText(context, "下一次进入后生效", Toast.LENGTH_SHORT).show()
+                Toast.makeText(context, "下一次打开app生效", Toast.LENGTH_SHORT).show()
             })
     }
     val showDialog = remember { mutableStateOf(false) }
@@ -254,6 +259,18 @@ fun ItemSubTitle(title: String) {
         Text(text = title, color = MaterialTheme.colorScheme.surfaceTint, fontSize = 13.sp)
     }
 }
+
+@Composable
+fun SwitchIcon(checked: Boolean) {
+    if (checked) {
+        Icon(
+            imageVector = Icons.Filled.Check,
+            contentDescription = "Check",
+            modifier = Modifier.size(SwitchDefaults.IconSize),
+        )
+    }
+}
+
 
 @Composable
 private fun Dialog(

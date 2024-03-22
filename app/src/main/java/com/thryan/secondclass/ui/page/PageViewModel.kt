@@ -54,8 +54,9 @@ class PageViewModel @Inject constructor(
 
     init {
         Log.i(TAG, "PageViewModel Created")
-//        scRepository.init(twfid, account, password)
-        send(PageIntent.Init)
+        val hasLogin = scRepository.secondClass != null
+        scRepository.init(twfid, account, password)
+        send(PageIntent.Init(hasLogin))
         viewModelScope.launch {
             scRepository.activities.collect {
                 update {
@@ -71,7 +72,8 @@ class PageViewModel @Inject constructor(
     private suspend fun onHandle(intent: PageIntent) {
         when (intent) {
             is PageIntent.Init -> {
-                login()
+                //是否已登录二课
+                login(intent.login)
             }
 
             is PageIntent.UpdateActivity -> {
@@ -147,17 +149,21 @@ class PageViewModel @Inject constructor(
             if (size <= 0 || filterState.value.onlySign) update { copy(loadMore = false) }
         } catch (e: Exception) {
             Log.e(TAG, e.toString())
-            update(PageActions.Dialog(e.message!!).reduce(pageState.value))
+            update(PageActions.Dialog(e.message ?: "未知错误").reduce(pageState.value))
         }
     }
 
 
-    private suspend fun login() = withContext(Dispatchers.IO) {
+    private suspend fun login(login: Boolean) = withContext(Dispatchers.IO) {
         try {
-            update(PageActions.Loading("登录中").reduce(pageState.value))
-//            val loginResult = scRepository.login()
-//            Log.i(TAG, "login secondclass $loginResult")
+            Log.d(TAG, login.toString())
+            if (!login) {
+                update(PageActions.Loading("登录中").reduce(pageState.value))
+                val loginResult = scRepository.login()
+                Log.i(TAG, "login secondclass $loginResult")
+            }
             update(PageActions.Loading("获取活动信息").reduce(pageState.value))
+            //我看不懂我写这个launch是干嘛的，但我决定不去动它
             val activityJob = launch { this@PageViewModel.getActivities() }
             activityJob.join()
             update(PageActions.Loading(loading = false).reduce(pageState.value))
@@ -167,7 +173,7 @@ class PageViewModel @Inject constructor(
                 PageActions.Dialog("使用前请勿在其他端登录，请等待几分钟后重新登录")
                     .reduce(pageState.value)
             )
-            else update(PageActions.Dialog(e.message ?: "error").reduce(pageState.value))
+            else update(PageActions.Dialog(e.message ?: "未知错误").reduce(pageState.value))
         }
 
     }

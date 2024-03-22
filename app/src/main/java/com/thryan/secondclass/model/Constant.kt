@@ -11,4 +11,5 @@ object Constant {
     val KEY_SC_PASSWORD = stringPreferencesKey("sc_password")
     val KEY_LAST_TIME = stringPreferencesKey("last_time")
     val KEY_DYNAMIC = booleanPreferencesKey("dynamic")
+    val KEY_WEB_VIEW = booleanPreferencesKey("web_view")
 }

@@ -194,7 +194,6 @@ fun DrawScope.wrapText(
     chineseWrapWidth: Float? = null // 用来处理UI需求中文每两个字符换行
 ) {
     val quadrant = quadrant(currentAngle)
-    Log.i("TTTT","$text $quadrant")
     var textMaxWidth = width
     when (quadrant) {
         0 -> {

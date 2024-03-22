@@ -26,7 +26,7 @@ class LoginViewModel @Inject constructor(
     private val scRepository: SCRepository
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(LoginState("", "", "", false, "", false, false))
+    private val _uiState = MutableStateFlow(LoginState("", "", "", false, "", false, false, appDataStore.getWebView(false)))
     val uiState: StateFlow<LoginState> = _uiState.asStateFlow()
 
     var auth: VpnInfo? = null
@@ -145,11 +145,15 @@ class LoginViewModel @Inject constructor(
                 update(uiState.value.copy(pending = intent.isPending))
             }
 
+            is LoginIntent.ChangeWebView -> {
+                update(uiState.value.copy(webView = true))
+            }
+
             is LoginIntent.WebLogin -> {
                 scRepository.secondClass = SecondClass(intent.twfid, intent.token)
-                appDataStore.putLastTime(
-                    System.currentTimeMillis().toString()
-                )
+                appDataStore.putLastTime(System.currentTimeMillis().toString())
+                appDataStore.putTwfid(intent.twfid)
+                appDataStore.putWebView(true)
                 withContext(Dispatchers.Main) {
                     navigator.navigate("page?twfid=\"\"&account=\"\"&password=\"\"") {
                         popUpTo("login") { inclusive = true }

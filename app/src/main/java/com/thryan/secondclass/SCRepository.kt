@@ -48,9 +48,11 @@ class SCRepository {
     }
 
     fun init(twfid: String, account: String, password: String?) {
-        this.secondClass = SecondClass(twfid)
-        this.account = account
-        this.password = if (password.isNullOrEmpty()) "123456" else password
+        if(this.secondClass == null) {
+            this.secondClass = SecondClass(twfid)
+            this.account = account
+            this.password = if (password.isNullOrEmpty()) "123456" else password
+        }
     }
 
     suspend fun login(): Boolean {

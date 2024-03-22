@@ -1,7 +1,7 @@
 package com.thryan.secondclass.ui.page
 
 sealed class PageIntent {
-    object Init : PageIntent()
+    class Init(val login:Boolean) : PageIntent()
     object CloseDialog : PageIntent()
     object UpdateActivity : PageIntent()
     object LoadMore : PageIntent()

@@ -9,6 +9,7 @@ import com.thryan.secondclass.model.Constant.KEY_LAST_TIME
 import com.thryan.secondclass.model.Constant.KEY_PASSWORD
 import com.thryan.secondclass.model.Constant.KEY_SC_PASSWORD
 import com.thryan.secondclass.model.Constant.KEY_TWFID
+import com.thryan.secondclass.model.Constant.KEY_WEB_VIEW
 import dagger.Module
 import dagger.hilt.InstallIn
 import dagger.hilt.android.components.ActivityComponent
@@ -47,6 +48,12 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
         }
     }
 
+    suspend fun putWebView(value: Boolean) {
+        dataStore.edit {
+            it[KEY_WEB_VIEW] = value
+        }
+    }
+
 
     fun getAccount(default: String): String = runBlocking {
         val string = getString(KEY_ACCOUNT)
@@ -76,6 +83,13 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
     fun getDynamic(default: Boolean): Boolean = runBlocking {
         val bool = dataStore.data.map {
             it[KEY_DYNAMIC]
+        }.first()
+        return@runBlocking bool ?: default
+    }
+
+    fun getWebView(default: Boolean): Boolean = runBlocking {
+        val bool = dataStore.data.map {
+            it[KEY_WEB_VIEW]
         }.first()
         return@runBlocking bool ?: default
     }
