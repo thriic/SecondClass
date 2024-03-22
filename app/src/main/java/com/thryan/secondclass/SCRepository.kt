@@ -48,7 +48,7 @@ class SCRepository {
     }
 
     fun init(twfid: String, account: String, password: String?) {
-        if(this.secondClass == null) {
+        if (this.secondClass == null) {
             this.secondClass = SecondClass(twfid)
             this.account = account
             this.password = if (password.isNullOrEmpty()) "123456" else password
@@ -79,10 +79,14 @@ class SCRepository {
                 } else throw Exception(res.message)
             }
             val typeId = ActivityType.getId(filter.type)
-            activities.emit(myActivities!!.filter {
-                (filter.keyword == "" || it.activityName.contains(filter.keyword)) && (typeId == "" || typeId == it.activityType)
-            })
-            return myActivities!!.size
+            val filterActivities = myActivities!!.filter {
+                (filter.keyword == "" || it.activityName.contains(filter.keyword)) && (typeId == "" || typeId == it.activityType) && (!filter.excludeClasses || !containsClasses(
+                    it.activityName
+                ))
+            }
+            activities.emit(filterActivities)
+
+            return filterActivities.size
         } else {
             this.onlySign = false
             val res = secondClass!!.getActivities(
@@ -93,8 +97,11 @@ class SCRepository {
                 activityType = ActivityType.getId(filter.type)
             )
             if (res.isSuccess()) {
-                activities.emit(if (clear) res.data.rows else activities.value + res.data.rows)
-                return res.data.rows.size
+                val filterActivities = (if (clear) res.data.rows else activities.value + res.data.rows).filter {
+                    !filter.excludeClasses || !containsClasses(it.activityName)
+                }
+                activities.emit(filterActivities)
+                return filterActivities.size
             } else throw Exception(res.message)
         }
     }

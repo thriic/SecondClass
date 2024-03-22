@@ -19,5 +19,4 @@ object AppDataStoreModule {
     fun provideDataStore(@ApplicationContext context: Context): DataStore<Preferences> =
         context.dataStore
 }
-
 val Context.dataStore by preferencesDataStore(name = Constant.DATA_STORE_NAME)

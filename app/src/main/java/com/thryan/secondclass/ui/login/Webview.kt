@@ -74,7 +74,9 @@ fun WebView(
             }
 
             if (twfid != "" && token != "") {
-                viewModel.send(LoginIntent.WebLogin(twfid, token))
+                viewModel.send(LoginIntent.WebLogin(twfid, token, {
+                    webView.destroy()
+                }))
             }
             return null
         }

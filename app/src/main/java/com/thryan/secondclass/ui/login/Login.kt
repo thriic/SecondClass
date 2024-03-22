@@ -69,9 +69,14 @@ fun WebView(viewModel: LoginViewModel) {
                 // 拦截对WebView的点击
                 .clickable(onClick = {}, interactionSource = interactionSource, indication = null)
         ) {
-            CircularProgressIndicator(
-                modifier = Modifier.size(64.dp)
-            )
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(64.dp)
+                )
+                Text(
+                    "加载中，请耐心等待",
+                )
+            }
         }
     }
 }
@@ -160,7 +165,7 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
         )
     )
     Text(
-        "通过WebView登录",
+        "通过网页登录",
         style = MaterialTheme.typography.labelSmall,
         color = MaterialTheme.colorScheme.primary,
         textDecoration = TextDecoration.Underline,

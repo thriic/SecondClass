@@ -3,6 +3,7 @@ package com.thryan.secondclass
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
+import com.thryan.secondclass.model.Constant
 import com.thryan.secondclass.model.Constant.KEY_ACCOUNT
 import com.thryan.secondclass.model.Constant.KEY_DYNAMIC
 import com.thryan.secondclass.model.Constant.KEY_LAST_TIME
@@ -90,6 +91,62 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
     fun getWebView(default: Boolean): Boolean = runBlocking {
         val bool = dataStore.data.map {
             it[KEY_WEB_VIEW]
+        }.first()
+        return@runBlocking bool ?: default
+    }
+
+
+    suspend fun putKeyword(value: String) {
+        putString(Constant.KEY_KEYWORD, value)
+    }
+
+    suspend fun putStatus(value: String) {
+        putString(Constant.KEY_STATUS, value)
+    }
+
+    suspend fun putType(value: String) {
+        putString(Constant.KEY_TYPE, value)
+    }
+
+    suspend fun putOnlySign(value: Boolean) {
+        dataStore.edit {
+            it[Constant.KEY_ONLY_SIGN] = value
+        }
+    }
+
+    suspend fun putExcludeClasses(value: Boolean) {
+        dataStore.edit {
+            it[Constant.KEY_EXCLUDE_CLASSES] = value
+        }
+    }
+
+
+    fun getKeyword(default: String): String = runBlocking {
+        val string = getString(Constant.KEY_KEYWORD)
+        return@runBlocking string ?: default
+    }
+
+    fun getStatus(default: String): String = runBlocking {
+        val string = getString(Constant.KEY_STATUS)
+        return@runBlocking string ?: default
+    }
+
+    fun getType(default: String): String = runBlocking {
+        val string = getString(Constant.KEY_TYPE)
+        return@runBlocking string ?: default
+    }
+
+
+    fun getOnlySign(default: Boolean): Boolean = runBlocking {
+        val bool = dataStore.data.map {
+            it[Constant.KEY_ONLY_SIGN]
+        }.first()
+        return@runBlocking bool ?: default
+    }
+
+    fun getExcludeClasses(default: Boolean): Boolean = runBlocking {
+        val bool = dataStore.data.map {
+            it[Constant.KEY_EXCLUDE_CLASSES]
         }.first()
         return@runBlocking bool ?: default
     }

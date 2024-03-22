@@ -12,8 +12,9 @@ data class PageState(
 )
 
 data class FilterState(
-    val keyword:String,
-    val onlySign:Boolean,
+    val keyword: String,
+    val onlySign: Boolean,
     val status: String,
-    val type:String
+    val type: String,
+    val excludeClasses: Boolean
 )

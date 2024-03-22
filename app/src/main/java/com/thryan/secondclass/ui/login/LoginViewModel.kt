@@ -159,6 +159,7 @@ class LoginViewModel @Inject constructor(
                         popUpTo("login") { inclusive = true }
                         launchSingleTop = true
                     }
+                    intent.destroy()
                 }
             }
 

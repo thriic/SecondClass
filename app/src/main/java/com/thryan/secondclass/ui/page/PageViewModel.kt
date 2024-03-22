@@ -4,6 +4,7 @@ import android.util.Log
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.thryan.secondclass.AppDataStore
 import com.thryan.secondclass.Navigator
 import com.thryan.secondclass.SCRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -18,6 +19,7 @@ import javax.inject.Inject
 @HiltViewModel
 class PageViewModel @Inject constructor(
     private val navigator: Navigator,
+    private val appDataStore: AppDataStore,
     private val scRepository: SCRepository,
     savedStateHandle: SavedStateHandle
 ) :
@@ -35,14 +37,17 @@ class PageViewModel @Inject constructor(
     )
     val pageState: StateFlow<PageState> = _pageState.asStateFlow()
 
-    private val _filterState = MutableStateFlow(
-        FilterState(
-            keyword = "",
-            onlySign = false,
-            status = "",
-            type = ""
+    private val _filterState = with(appDataStore) {
+        MutableStateFlow(
+            FilterState(
+                keyword = getKeyword(""),
+                onlySign = getOnlySign(false),
+                status = getStatus(""),
+                type = getType(""),
+                excludeClasses = getExcludeClasses(false)
+            )
         )
-    )
+    }
     val filterState: StateFlow<FilterState> = _filterState.asStateFlow()
 
 
@@ -100,8 +105,8 @@ class PageViewModel @Inject constructor(
 
 
             is PageIntent.Search -> {
-                val (keyword, onlySign, status, type) = filterState.value
-                if (intent.keyword != keyword || intent.onlySign != onlySign || intent.status != status || intent.type != type) {
+                val (keyword, onlySign, status, type, excludeClasses) = filterState.value
+                if (intent.keyword != keyword || intent.onlySign != onlySign || intent.status != status || intent.type != type || intent.excludeClasses != excludeClasses) {
                     //清空列表
                     update {
                         copy(activities = emptyList(), loadMore = true)
@@ -111,12 +116,21 @@ class PageViewModel @Inject constructor(
                             keyword = intent.keyword,
                             onlySign = intent.onlySign,
                             status = intent.status,
-                            type = intent.type
+                            type = intent.type,
+                            excludeClasses = intent.excludeClasses
                         )
                     }
-                    Log.i(
+                    //保存
+                    with(appDataStore) {
+                        putKeyword(intent.keyword)
+                        putOnlySign(intent.onlySign)
+                        putStatus(intent.status)
+                        putType(intent.type)
+                        putExcludeClasses(intent.excludeClasses)
+                    }
+                    Log.d(
                         TAG,
-                        "filter ${intent.keyword} ${intent.onlySign} ${intent.status} ${intent.type}"
+                        "filter ${intent.keyword} ${intent.onlySign} ${intent.status} ${intent.type} ${intent.excludeClasses}"
                     )
                     currentPageNum = 0
                     getActivities(clear = true)

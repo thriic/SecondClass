@@ -3,6 +3,9 @@ package com.thryan.secondclass.ui.page
 import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -42,7 +45,7 @@ import com.thryan.secondclass.R
 val statusList = ActivityStatus.activityStatusMap.values.toList()
 val typeList = ActivityType.activityTypeMap.values.toList()
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun Search(
     modifier: Modifier = Modifier,
@@ -55,6 +58,7 @@ fun Search(
     var onlySign by rememberSaveable { mutableStateOf(filterState.onlySign) }
     var status by rememberSaveable { mutableStateOf(filterState.status) }
     var type by rememberSaveable { mutableStateOf(filterState.type) }
+    var excludeClasses by rememberSaveable { mutableStateOf(filterState.excludeClasses) }
 
     var active by rememberSaveable { mutableStateOf(false) }
     val padding: Int by animateIntAsState(if (active) 0 else 16)
@@ -63,19 +67,27 @@ fun Search(
         query = keyword,
         onQueryChange = { keyword = it },
         onSearch = {
-            viewModel.send(PageIntent.Search(keyword, onlySign, status, type))
+            viewModel.send(PageIntent.Search(keyword, onlySign, status, type, excludeClasses))
             active = false
         },
         active = active,
         onActiveChange = {
-            if (!it) viewModel.send(PageIntent.Search(keyword, onlySign, status, type))
+            if (!it) viewModel.send(
+                PageIntent.Search(
+                    keyword,
+                    onlySign,
+                    status,
+                    type,
+                    excludeClasses
+                )
+            )
             active = it
         },
         placeholder = { Text("搜索活动") },
         leadingIcon = {
             if (active) IconButton(onClick = {
                 active = false
-                viewModel.send(PageIntent.Search(keyword, onlySign, status, type))
+                viewModel.send(PageIntent.Search(keyword, onlySign, status, type, excludeClasses))
             }) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = null)
             } else Icon(Icons.Default.Search, contentDescription = null)
@@ -90,46 +102,46 @@ fun Search(
             }
         },
     ) {
-        LazyRow(
+        FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            verticalAlignment = Alignment.CenterVertically,
+            verticalArrangement = Arrangement.Center,
             horizontalArrangement = Arrangement.spacedBy(16.dp)
         ) {
 
-            item {
-                Filter(label = "仅报名", select = onlySign) { selected, _ ->
-                    onlySign = selected
-                }
+            Filter(label = "仅报名", select = onlySign) { selected, _ ->
+                onlySign = selected
             }
 
-            item {
-                Filter(
-                    label = if (status == "") "状态" else status,
-                    select = status != "",
-                    list = statusList
-                ) { selected, choose ->
-                    status = if (selected)
-                        choose
-                    else
-                        ""
-                }
+            Filter(
+                label = if (status == "") "状态" else status,
+                select = status != "",
+                list = statusList
+            ) { selected, choose ->
+                status = if (selected)
+                    choose
+                else
+                    ""
             }
 
-            item {
-                Filter(
-                    label = if (type == "") "类型" else type,
-                    select = type != "",
-                    list = typeList
-                ) { selected, choose ->
-                    type = if (selected)
-                        choose
-                    else
-                        ""
-                }
+            Filter(
+                label = if (type == "") "类型" else type,
+                select = type != "",
+                list = typeList
+            ) { selected, choose ->
+                type = if (selected)
+                    choose
+                else
+                    ""
+            }
+
+
+            Filter(label = "屏蔽班级活动", select = excludeClasses) { selected, _ ->
+                excludeClasses = selected
             }
         }
+
 
         LazyColumn {
             item {
