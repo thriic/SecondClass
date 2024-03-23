@@ -11,7 +11,8 @@ data class InfoState(
     val signOutTime: LocalDateTime,
     val loading: Boolean,
     val showDialog: Dialog?,
-    val link: String
+    val link: String,
+    val resign: Boolean
 )
 
 enum class Dialog {

@@ -27,7 +27,8 @@ class UserViewModel @Inject constructor(
             radarScore = emptyList(),
             scoreInfo = cn.thriic.common.data.ScoreInfo(0.0, 0, 0, 0),
             dynamic = appDataStore.getDynamic(false),
-            webView = appDataStore.getWebView(false)
+            webView = appDataStore.getWebView(false),
+            resign = appDataStore.getResign(false)
         )
     )
     val userState: StateFlow<UserState> = _userState.asStateFlow()
@@ -85,6 +86,11 @@ class UserViewModel @Inject constructor(
             is UserIntent.ChangeWebView -> {
                 update { copy(webView = intent.checked) }
                 appDataStore.putWebView(intent.checked)
+            }
+
+            is UserIntent.ChangeResign -> {
+                update { copy(resign = intent.checked) }
+                appDataStore.putResign(intent.checked)
             }
         }
     }

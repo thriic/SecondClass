@@ -79,15 +79,11 @@ fun User(navController: NavController, userViewModel: UserViewModel) {
             )
         },
         content = { innerPadding ->
-            if (userState.loading) {
-                val text = if (userState.user.name.isEmpty()) "加载用户信息"
-                else "获取分数"
-                Progress(text)
-            } else {
-                LazyColumn(
-                    contentPadding = innerPadding,
-                ) {
-                    item {
+            LazyColumn(
+                contentPadding = innerPadding,
+            ) {
+                item {
+                    if (!userState.loading) {
                         BasicInfo(userViewModel)
                         HorizontalDivider(
                             Modifier
@@ -95,17 +91,21 @@ fun User(navController: NavController, userViewModel: UserViewModel) {
                                 .padding(start = 24.dp, end = 24.dp, bottom = 16.dp)
                         )
                     }
-                    item {
-                        ScoreInfo(userViewModel)
-                        HorizontalDivider(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 16.dp)
-                        )
-                    }
-                    item {
-                        OtherInfo(userState.dynamic, userState.webView, userViewModel)
-                    }
+                }
+                item {
+                    if (userState.loading) {
+                        val text = if (userState.user.name.isEmpty()) "加载用户信息"
+                        else "获取分数"
+                        Progress(text)
+                    } else ScoreInfo(userViewModel)
+                    HorizontalDivider(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, end = 24.dp, top = 16.dp, bottom = 16.dp)
+                    )
+                }
+                item {
+                    OtherInfo(userState.dynamic, userState.webView, userState.resign, userViewModel)
                 }
             }
         }
@@ -186,7 +186,12 @@ fun ScoreInfo(userViewModel: UserViewModel) {
 }
 
 @Composable
-fun OtherInfo(dynamicChecked: Boolean, webViewChecked: Boolean, viewModel: UserViewModel) {
+fun OtherInfo(
+    dynamicChecked: Boolean,
+    webViewChecked: Boolean,
+    resignChecked: Boolean,
+    viewModel: UserViewModel
+) {
     ItemSubTitle("设置")
 
     val context = LocalContext.current
@@ -201,6 +206,23 @@ fun OtherInfo(dynamicChecked: Boolean, webViewChecked: Boolean, viewModel: UserV
             onCheckedChange = {
                 viewModel.send(UserIntent.ChangeWebView(it))
                 Toast.makeText(context, "下一次打开app生效", Toast.LENGTH_SHORT).show()
+            })
+    }
+    ListItem(
+        modifier = Modifier.clickable { },
+        description = "允许重复签到",
+    ) { modifier ->
+        Switch(
+            modifier = modifier,
+            thumbContent = { SwitchIcon(checked = resignChecked) },
+            checked = resignChecked,
+            onCheckedChange = {
+                viewModel.send(UserIntent.ChangeResign(it))
+                if (it) Toast.makeText(
+                    context,
+                    "开启后可重复签到已经签到的活动",
+                    Toast.LENGTH_SHORT
+                ).show()
             })
     }
     ListItem(

@@ -296,9 +296,14 @@ fun SignInCard(uiState: InfoState, viewModel: InfoViewModel) {
                 else -> "签到"
             }, style = MaterialTheme.typography.titleMedium
         )
-        if (uiState.activity.activityStatus in listOf("0", "1"))
+        val hasSignIn = uiState.signInfo.signIn()
+        if(uiState.resign && hasSignIn){
+            Text("重复签到时请谨慎选择时间", style = MaterialTheme.typography.labelMedium)
+        }
+        else if (uiState.activity.activityStatus in listOf("0", "1"))
             Text("签到报名中或待开始的活动存在风险", style = MaterialTheme.typography.labelMedium)
 
+        val enable = uiState.resign || !hasSignIn
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -307,26 +312,30 @@ fun SignInCard(uiState: InfoState, viewModel: InfoViewModel) {
             OutlinedTextField(
                 value = uiState.signInTime.formatDate(),
                 onValueChange = {},
-                enabled = uiState.signInfo.signInTime.isEmpty(),
-                label = { Text("${if (uiState.signInfo.signInTime.isEmpty()) "选择" else ""}签到日期") },
-                modifier = Modifier.onFocusChanged {
-                    if (it.isFocused) {
-                        viewModel.send(InfoIntent.ShowDialog(SignInDate))
-                        keyboard?.hide()
+                enabled = enable,
+                label = { Text("${if (enable) "选择" else ""}签到日期") },
+                modifier = Modifier
+                    .onFocusChanged {
+                        if (it.isFocused) {
+                            viewModel.send(InfoIntent.ShowDialog(SignInDate))
+                            keyboard?.hide()
+                        }
                     }
-                }.weight(1f)
+                    .weight(1f)
             )
             OutlinedTextField(
                 value = uiState.signInTime.formatTime(),
                 onValueChange = {},
-                enabled = uiState.signInfo.signInTime.isEmpty(),
+                enabled = enable,
                 label = { Text("签到时间") },
-                modifier = Modifier.onFocusChanged {
-                    if (it.isFocused) {
-                        viewModel.send(InfoIntent.ShowDialog(SignInTime))
-                        keyboard?.hide()
+                modifier = Modifier
+                    .onFocusChanged {
+                        if (it.isFocused) {
+                            viewModel.send(InfoIntent.ShowDialog(SignInTime))
+                            keyboard?.hide()
+                        }
                     }
-                }.weight(1f)
+                    .weight(1f)
             )
         }
 
@@ -338,26 +347,30 @@ fun SignInCard(uiState: InfoState, viewModel: InfoViewModel) {
             OutlinedTextField(
                 value = uiState.signOutTime.formatDate(),
                 onValueChange = {},
-                enabled = uiState.signInfo.signOutTime.isEmpty(),
-                label = { Text("${if (uiState.signInfo.signOutTime.isEmpty()) "选择" else ""}签退日期") },
-                modifier = Modifier.onFocusChanged {
-                    if (it.isFocused) {
-                        viewModel.send(InfoIntent.ShowDialog(SignOutDate))
-                        keyboard?.hide()
+                enabled = enable,
+                label = { Text("${if (enable) "选择" else ""}签退日期") },
+                modifier = Modifier
+                    .onFocusChanged {
+                        if (it.isFocused) {
+                            viewModel.send(InfoIntent.ShowDialog(SignOutDate))
+                            keyboard?.hide()
+                        }
                     }
-                }.weight(1f)
+                    .weight(1f)
             )
             OutlinedTextField(
                 value = uiState.signOutTime.formatTime(),
                 onValueChange = {},
-                enabled = uiState.signInfo.signOutTime.isEmpty(),
+                enabled = enable,
                 label = { Text("签退时间") },
-                modifier = Modifier.onFocusChanged {
-                    if (it.isFocused) {
-                        viewModel.send(InfoIntent.ShowDialog(SignOutTime))
-                        keyboard?.hide()
+                modifier = Modifier
+                    .onFocusChanged {
+                        if (it.isFocused) {
+                            viewModel.send(InfoIntent.ShowDialog(SignOutTime))
+                            keyboard?.hide()
+                        }
                     }
-                }.weight(1f)
+                    .weight(1f)
             )
         }
         Row(
@@ -365,7 +378,7 @@ fun SignInCard(uiState: InfoState, viewModel: InfoViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.End
         ) {
-            if (!uiState.signInfo.signIn()) OutlinedButton(
+            if (enable) OutlinedButton(
                 modifier = Modifier.padding(start = 16.dp),
                 onClick = { viewModel.send(InfoIntent.SignIn) }) {
                 Text("签到签退")

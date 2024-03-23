@@ -8,6 +8,7 @@ import com.thryan.secondclass.model.Constant.KEY_ACCOUNT
 import com.thryan.secondclass.model.Constant.KEY_DYNAMIC
 import com.thryan.secondclass.model.Constant.KEY_LAST_TIME
 import com.thryan.secondclass.model.Constant.KEY_PASSWORD
+import com.thryan.secondclass.model.Constant.KEY_RESIGN
 import com.thryan.secondclass.model.Constant.KEY_SC_PASSWORD
 import com.thryan.secondclass.model.Constant.KEY_TWFID
 import com.thryan.secondclass.model.Constant.KEY_WEB_VIEW
@@ -55,6 +56,12 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
         }
     }
 
+    suspend fun putResign(value: Boolean) {
+        dataStore.edit {
+            it[KEY_RESIGN] = value
+        }
+    }
+
 
     fun getAccount(default: String): String = runBlocking {
         val string = getString(KEY_ACCOUNT)
@@ -91,6 +98,14 @@ class AppDataStore @Inject constructor(private val dataStore: DataStore<Preferen
     fun getWebView(default: Boolean): Boolean = runBlocking {
         val bool = dataStore.data.map {
             it[KEY_WEB_VIEW]
+        }.first()
+        return@runBlocking bool ?: default
+    }
+
+
+    fun getResign(default: Boolean): Boolean = runBlocking {
+        val bool = dataStore.data.map {
+            it[KEY_RESIGN]
         }.first()
         return@runBlocking bool ?: default
     }

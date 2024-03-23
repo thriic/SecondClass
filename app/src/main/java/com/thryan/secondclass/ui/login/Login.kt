@@ -164,15 +164,21 @@ fun LoginContent(uiState: LoginState, viewModel: LoginViewModel) {
             onDone = { }
         )
     )
-    Text(
-        "通过网页登录",
-        style = MaterialTheme.typography.labelSmall,
-        color = MaterialTheme.colorScheme.primary,
-        textDecoration = TextDecoration.Underline,
-        modifier = Modifier.clickable {
-            viewModel.send(LoginIntent.ChangeWebView)
-        }
-    )
+    Row {
+        Text(
+            "无法登录可",
+            style = MaterialTheme.typography.labelSmall,
+        )
+        Text(
+            "通过网页登录",
+            style = MaterialTheme.typography.labelSmall,
+            color = MaterialTheme.colorScheme.primary,
+            textDecoration = TextDecoration.Underline,
+            modifier = Modifier.clickable {
+                viewModel.send(LoginIntent.ChangeWebView)
+            }
+        )
+    }
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.End,

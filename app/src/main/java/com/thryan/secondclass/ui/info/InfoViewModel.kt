@@ -13,6 +13,7 @@ import cn.thriic.common.utils.before
 import cn.thriic.common.utils.toLocalDateTime
 import com.thryan.secondclass.SCRepository
 import cn.thriic.common.utils.formatDateTime
+import com.thryan.secondclass.AppDataStore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +25,7 @@ import javax.inject.Inject
 @HiltViewModel
 class InfoViewModel @Inject constructor(
     private val scRepository: SCRepository,
+    private val appDataStore: AppDataStore,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
 
@@ -38,7 +40,8 @@ class InfoViewModel @Inject constructor(
                 signInTime = LocalDateTime.now(),
                 signOutTime = LocalDateTime.now(),
                 link = "",
-                showDialog = null
+                showDialog = null,
+                resign = appDataStore.getResign(false)
             )
         )
     val uiState: StateFlow<InfoState> = _uiState.asStateFlow()

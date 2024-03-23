@@ -9,5 +9,6 @@ data class UserState(
     val radarScore: List<RadarScore>,
     val loading: Boolean,
     val dynamic: Boolean,
-    val webView: Boolean
+    val webView: Boolean,
+    val resign: Boolean
 )
