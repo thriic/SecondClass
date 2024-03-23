@@ -177,7 +177,6 @@ class JSON {
     val jsonObject = JSONObject()
     infix fun String.to(value: String) {
         jsonObject.put(this, value)
-        println("$this to $value")
     }
 }
 

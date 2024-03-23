@@ -92,7 +92,7 @@ class InfoViewModel @Inject constructor(
             is InfoIntent.UpdateSignInTime -> {
                 //获取state原本的localDate再与要更改的time拼接
                 val localDate = uiState.value.signInTime.toLocalDate()
-                val localDateTime = infoIntent.signInTime.atDate(localDate)
+                val localDateTime = infoIntent.signInTime.atDate(localDate).minusSeconds((1..59).random().toLong())
                 if (localDateTime.isAfter(uiState.value.signOutTime)) {
                     showSnackbar("签到时间不得晚于签退时间")
                     return
@@ -123,7 +123,7 @@ class InfoViewModel @Inject constructor(
 
             is InfoIntent.UpdateSignOutTime -> {
                 val localDate = uiState.value.signOutTime.toLocalDate()
-                val localDateTime = infoIntent.signOutTime.atDate(localDate)
+                val localDateTime = infoIntent.signOutTime.atDate(localDate).minusSeconds((0..59).random().toLong())
                 if (localDateTime.isBefore(uiState.value.signInTime)) {
                     showSnackbar("签退时间不得早于签到时间")
                     return
